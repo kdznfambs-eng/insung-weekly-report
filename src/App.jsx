@@ -335,13 +335,19 @@ export default function App() {
         @media print {
           @page {
             size: A4 landscape;
-            margin: 10mm;
+            margin: 12mm 10mm;
+          }
+          /* Hide browser default header/footer (URL, date/time, document title) */
+          head, title {
+            display: none !important;
           }
           body {
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
             background-color: #ffffff !important;
             color: #0f172a !important;
+            margin: 0 !important;
+            padding: 0 !important;
           }
           .print\\:break-before-page {
             break-before: page !important;
