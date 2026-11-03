@@ -71,79 +71,98 @@ export default function App() {
     일: { type: '없음' }
   });
 
-  // Consolidated Team Reports Database
-  const [teamReports, setTeamReports] = useState([
-    {
-      id: 'demo-1',
-      teamName: '설계팀',
-      memberName: '김철수',
-      memberRank: '부장',
-      reportDate: '2026-11-03',
-      createdAt: Date.now() - (1000 * 60 * 60 * 12),
-      lastWeekTasks: [
-        { content: 'A구역 모듈 배치 도면 최종 수정' },
-        { content: '안전성 검토 보고서 반영' }
-      ],
-      thisWeekTasks: [
-        { content: 'B구역 구조 계산서 상세 작업' },
-        { content: '도면 출도 및 1차 검토' }
-      ],
-      otherNotes: '3D 모델링 관련 SW 라이선스 연장 필요',
-      weeklyOutings: {
-        월: { active: false, note: '' },
-        화: { active: true, note: '용현BM 가열로 점검' },
-        수: { active: false, note: '' },
-        목: { active: false, note: '' },
-        금: { active: false, note: '' },
-        토: { active: false, note: '' },
-        일: { active: false, note: '' }
-      },
-      weeklyVacations: {
-        월: { type: '없음' },
-        화: { type: '없음' },
-        수: { type: '없음' },
-        목: { type: '연차' },
-        금: { type: '없음' },
-        토: { type: '없음' },
-        일: { type: '없음' }
+  // Consolidated Team Reports Database (Persisted using localStorage)
+  const [teamReports, setTeamReports] = useState(() => {
+    try {
+      const saved = localStorage.getItem('insung_team_reports');
+      if (saved) {
+        return JSON.parse(saved);
       }
-    },
-    {
-      id: 'demo-2',
-      teamName: '설계팀',
-      memberName: '이영희',
-      memberRank: '대리',
-      reportDate: '2026-11-03',
-      createdAt: Date.now() - (1000 * 60 * 60 * 6),
-      lastWeekTasks: [
-        { content: '부품 리스트 정원 검토 및 제안서 작성' },
-        { content: '원자재 단가 비교표 작성' }
-      ],
-      thisWeekTasks: [
-        { content: '고객사 요청 도면 수정본 전달' },
-        { content: '주간 안전 점검 참가' }
-      ],
-      otherNotes: '사무용품 수량 부족 건의',
-      weeklyOutings: {
-        월: { active: true, note: '한화글로벌 보은사업장 기술협의' },
-        화: { active: false, note: '' },
-        수: { active: false, note: '' },
-        목: { active: false, note: '' },
-        금: { active: false, note: '' },
-        토: { active: false, note: '' },
-        일: { active: false, note: '' }
-      },
-      weeklyVacations: {
-        월: { type: '없음' },
-        화: { type: '없음' },
-        수: { type: '대체 휴무' },
-        목: { type: '없음' },
-        금: { type: '없음' },
-        토: { type: '없음' },
-        일: { type: '없음' }
-      }
+    } catch (e) {
+      console.error('Failed to load reports from localStorage', e);
     }
-  ]);
+    return [
+      {
+        id: 'demo-1',
+        teamName: '설계팀',
+        memberName: '김철수',
+        memberRank: '부장',
+        reportDate: '2026-11-03',
+        createdAt: Date.now() - (1000 * 60 * 60 * 12),
+        lastWeekTasks: [
+          { content: 'A구역 모듈 배치 도면 최종 수정' },
+          { content: '안전성 검토 보고서 반영' }
+        ],
+        thisWeekTasks: [
+          { content: 'B구역 구조 계산서 상세 작업' },
+          { content: '도면 출도 및 1차 검토' }
+        ],
+        otherNotes: '3D 모델링 관련 SW 라이선스 연장 필요',
+        weeklyOutings: {
+          월: { active: false, note: '' },
+          화: { active: true, note: '용현BM 가열로 점검' },
+          수: { active: false, note: '' },
+          목: { active: false, note: '' },
+          금: { active: false, note: '' },
+          토: { active: false, note: '' },
+          일: { active: false, note: '' }
+        },
+        weeklyVacations: {
+          월: { type: '없음' },
+          화: { type: '없음' },
+          수: { type: '없음' },
+          목: { type: '연차' },
+          금: { type: '없음' },
+          토: { type: '없음' },
+          일: { type: '없음' }
+        }
+      },
+      {
+        id: 'demo-2',
+        teamName: '설계팀',
+        memberName: '이영희',
+        memberRank: '대리',
+        reportDate: '2026-11-03',
+        createdAt: Date.now() - (1000 * 60 * 60 * 6),
+        lastWeekTasks: [
+          { content: '부품 리스트 정원 검토 및 제안서 작성' },
+          { content: '원자재 단가 비교표 작성' }
+        ],
+        thisWeekTasks: [
+          { content: '고객사 요청 도면 수정본 전달' },
+          { content: '주간 안전 점검 참가' }
+        ],
+        otherNotes: '사무용품 수량 부족 건의',
+        weeklyOutings: {
+          월: { active: true, note: '한화글로벌 보은사업장 기술협의' },
+          화: { active: false, note: '' },
+          수: { active: false, note: '' },
+          목: { active: false, note: '' },
+          금: { active: false, note: '' },
+          토: { active: false, note: '' },
+          일: { active: false, note: '' }
+        },
+        weeklyVacations: {
+          월: { type: '없음' },
+          화: { type: '없음' },
+          수: { type: '대체 휴무' },
+          목: { type: '없음' },
+          금: { type: '없음' },
+          토: { type: '없음' },
+          일: { type: '없음' }
+        }
+      }
+    ];
+  });
+
+  // Automatically sync teamReports state to browser localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('insung_team_reports', JSON.stringify(teamReports));
+    } catch (e) {
+      console.error('Failed to save reports to localStorage', e);
+    }
+  }, [teamReports]);
 
   // Scheduled / Interval Auto-delete timer effect
   useEffect(() => {
