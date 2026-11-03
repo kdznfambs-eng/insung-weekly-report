@@ -631,7 +631,7 @@ export default function App() {
               <div>
                 <h2 className="text-xl font-bold text-white flex items-center gap-2">
                   <Building2 className="w-6 h-6 text-blue-400" />
-                  팀 주간업무보고서 (통합 보고서)
+                  팀 주간업무보고서
                 </h2>
               </div>
               <button
@@ -639,7 +639,7 @@ export default function App() {
                 className="bg-red-600 hover:bg-red-500 text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-lg transition flex items-center gap-2"
               >
                 <Printer className="w-4 h-4" />
-                <span>PDF 파일로 저장 / 인쇄</span>
+                <span>주간업무보고서 PDF 인쇄</span>
               </button>
             </div>
 
@@ -837,7 +837,7 @@ export default function App() {
                   className="bg-red-600 hover:bg-red-500 text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-lg transition flex items-center gap-2"
                 >
                   <Printer className="w-4 h-4" />
-                  <span>통합 보고서 PDF 인쇄</span>
+                  <span>대쉬 보드 PDF 인쇄</span>
                 </button>
               </div>
             </div>
