@@ -4,28 +4,9 @@ import {
   FileText, Briefcase, Plane, LayoutDashboard, Clock, Trash2,
   Eye, Building2, Printer
 } from 'lucide-react';
-import { initializeApp } from 'firebase/app';
-import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'firebase/auth';
-import { getFirestore, collection, doc, onSnapshot, setDoc, deleteDoc } from 'firebase/firestore';
-
-// Initialize Firebase
-const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
-  apiKey: "demo-api-key",
-  authDomain: "demo-app.firebaseapp.com",
-  projectId: "demo-app",
-  storageBucket: "demo-app.appspot.com",
-  messagingSenderId: "123456789",
-  appId: "1:123456789:web:demo"
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-const appId = typeof __app_id !== 'undefined' ? __app_id : 'insung-weekly-report';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('form'); // 'form' | 'dashboard' | 'view'
-  const [user, setUser] = useState(null);
   
   // Auto-delete settings: mode ('none' | 'interval' | 'scheduled')
   const [autoDeleteMode, setAutoDeleteMode] = useState('scheduled'); 
@@ -90,7 +71,7 @@ export default function App() {
     일: { type: '없음' }
   });
 
-  // Real-time Public Consolidated Team Reports Database
+  // Public Consolidated Team Reports Database
   const [teamReports, setTeamReports] = useState(() => {
     try {
       const saved = localStorage.getItem('insung_team_reports');
@@ -100,55 +81,18 @@ export default function App() {
     }
   });
 
-  // Firebase Authentication setup
+  // Sync teamReports to localStorage whenever updated
   useEffect(() => {
-    const initAuth = async () => {
-      try {
-        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-          await signInWithCustomToken(auth, __initial_auth_token);
-        } else {
-          await signInAnonymously(auth);
-        }
-      } catch (err) {
-        console.error("Auth initialization failed:", err);
-      }
-    };
-    initAuth();
-    const unsubscribe = onAuthStateChanged(auth, setUser);
-    return () => unsubscribe();
-  }, []);
-
-  // Real-time Firestore sync for sharing reports across all users
-  useEffect(() => {
-    if (!user) return;
-
-    const publicCollectionRef = collection(db, 'artifacts', appId, 'public', 'data', 'reports');
-
-    const unsubscribe = onSnapshot(
-      publicCollectionRef,
-      (snapshot) => {
-        const reportsList = [];
-        snapshot.forEach((docSnap) => {
-          reportsList.push({ id: docSnap.id, ...docSnap.data() });
-        });
-        // Sort descending by creation date
-        reportsList.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-        setTeamReports(reportsList);
-        try {
-          localStorage.setItem('insung_team_reports', JSON.stringify(reportsList));
-        } catch (e) {}
-      },
-      (error) => {
-        console.error("Firestore onSnapshot error:", error);
-      }
-    );
-
-    return () => unsubscribe();
-  }, [user]);
+    try {
+      localStorage.setItem('insung_team_reports', JSON.stringify(teamReports));
+    } catch (e) {
+      console.error("localStorage save error:", e);
+    }
+  }, [teamReports]);
 
   // Scheduled / Interval Auto-delete timer effect
   useEffect(() => {
-    if (autoDeleteMode === 'none' || !user) return;
+    if (autoDeleteMode === 'none') return;
 
     const dayMap = { '일': 0, '월': 1, '화': 2, '수': 3, '목': 4, '금': 5, '토': 6 };
 
@@ -164,13 +108,7 @@ export default function App() {
         const currentMinute = now.getMinutes();
 
         if (currentDayNum === targetDayNum && currentHour === targetHour && currentMinute === targetMinute) {
-          teamReports.forEach(async (r) => {
-            try {
-              await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'reports', r.id));
-            } catch (err) {
-              console.error("Auto delete error:", err);
-            }
-          });
+          setTeamReports([]);
         }
       } else if (autoDeleteMode === 'interval') {
         const getExpiryMs = (policy) => {
@@ -185,21 +123,13 @@ export default function App() {
         const expiryMs = getExpiryMs(autoDeleteInterval);
         const currentTimeMs = now.getTime();
 
-        teamReports.forEach(async (r) => {
-          if (currentTimeMs - (r.createdAt || currentTimeMs) >= expiryMs) {
-            try {
-              await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'reports', r.id));
-            } catch (err) {
-              console.error("Auto interval delete error:", err);
-            }
-          }
-        });
+        setTeamReports(prev => prev.filter(r => currentTimeMs - (r.createdAt || currentTimeMs) < expiryMs));
       }
     };
 
     const interval = setInterval(checkAutoDelete, 10000);
     return () => clearInterval(interval);
-  }, [autoDeleteMode, autoDeleteInterval, autoDeleteDay, autoDeleteTime, user, teamReports]);
+  }, [autoDeleteMode, autoDeleteInterval, autoDeleteDay, autoDeleteTime]);
 
   // Form Reset Function
   const resetForm = () => {
@@ -270,21 +200,20 @@ export default function App() {
     }));
   };
 
-  // Save report to public shared database
-  const handleSaveToDashboard = async () => {
+  // Save report to dashboard
+  const handleSaveToDashboard = () => {
     if (!memberName.trim()) {
       alert('담당자 성명을 입력해주세요.');
       return;
     }
 
-    const reportId = 'report-' + Date.now();
     const newReport = {
+      id: 'report-' + Date.now(),
       teamName,
       memberName,
       memberRank,
       reportDate,
       createdAt: Date.now(),
-      createdBy: user ? user.uid : 'anon',
       lastWeekTasks: [...lastWeekTasks],
       thisWeekTasks: [...thisWeekTasks],
       otherNotes,
@@ -292,42 +221,15 @@ export default function App() {
       weeklyVacations: { ...weeklyVacations }
     };
 
-    try {
-      if (user) {
-        await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'reports', reportId), newReport);
-      } else {
-        const updated = [newReport, ...teamReports];
-        setTeamReports(updated);
-        localStorage.setItem('insung_team_reports', JSON.stringify(updated));
-      }
-      alert(`${memberName} ${memberRank} 님의 주간업무보고서가 팀 취합 목록에 등록되었습니다.`);
-      resetForm();
-      setActiveTab('view');
-    } catch (err) {
-      console.error("Error saving report:", err);
-      // Fallback to local storage if network fails
-      const updated = [newReport, ...teamReports];
-      setTeamReports(updated);
-      localStorage.setItem('insung_team_reports', JSON.stringify(updated));
-      alert(`${memberName} ${memberRank} 님의 주간업무보고서가 로컬에 등록되었습니다.`);
-      resetForm();
-      setActiveTab('view');
-    }
+    setTeamReports(prev => [newReport, ...prev]);
+    alert(`${memberName} ${memberRank} 님의 주간업무보고서가 팀 취합 목록에 등록되었습니다.`);
+    resetForm();
+    setActiveTab('view');
   };
 
-  // Delete a report from public shared database
-  const handleDeleteReport = async (reportId) => {
-    try {
-      if (user) {
-        await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'reports', reportId));
-      } else {
-        const updated = teamReports.filter(r => r.id !== reportId);
-        setTeamReports(updated);
-        localStorage.setItem('insung_team_reports', JSON.stringify(updated));
-      }
-    } catch (err) {
-      console.error("Error deleting report:", err);
-    }
+  // Delete a report
+  const handleDeleteReport = (reportId) => {
+    setTeamReports(prev => prev.filter(r => r.id !== reportId));
   };
 
   // Helper summaries
