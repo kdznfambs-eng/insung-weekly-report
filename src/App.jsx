@@ -329,7 +329,27 @@ export default function App() {
   const vacationOptions = ['없음', '연차', '오전반차', '오후반차', '대체 휴무', '공가', '병가', '경조휴가'];
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 font-sans pb-12 print:bg-white print:text-black print:pb-0">
+    <div className="min-h-screen bg-slate-900 text-slate-100 font-sans pb-12 print:bg-slate-900 print:text-slate-100 print:pb-0">
+      {/* Print-specific style override for maintaining exact dark dashboard theme on PDF output */}
+      <style>{`
+        @media print {
+          @page {
+            size: A4 portrait;
+            margin: 10mm;
+          }
+          body {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            background-color: #0f172a !important;
+            color: #f8fafc !important;
+          }
+          .print\\:break-before-page {
+            break-before: page !important;
+            page-break-before: always !important;
+          }
+        }
+      `}</style>
+
       {/* Header Bar - Hidden on print */}
       <header className="bg-slate-800 border-b border-slate-700 sticky top-0 z-30 shadow-md print:hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -652,28 +672,28 @@ export default function App() {
                 </p>
               </div>
             ) : (
-              <div className="bg-slate-800/90 border border-slate-700 rounded-2xl overflow-hidden shadow-2xl p-6 space-y-6 print:bg-white print:text-black print:border-none print:shadow-none print:p-0">
+              <div className="bg-slate-800/90 border border-slate-700 rounded-2xl overflow-hidden shadow-2xl p-6 space-y-6 print:bg-slate-900 print:text-slate-100 print:border-slate-700 print:shadow-none print:p-0">
                 {/* 보고서 상단 타이틀 구조 */}
-                <div className="text-center space-y-1 pb-4 border-b border-slate-700 print:border-black">
-                  <h1 className="text-2xl font-extrabold text-blue-400 tracking-wider print:text-black print:text-xl">
+                <div className="text-center space-y-1 pb-4 border-b border-slate-700 print:border-slate-700">
+                  <h1 className="text-2xl font-extrabold text-blue-400 tracking-wider print:text-blue-400 print:text-xl">
                     &lt;&lt; 인성씨앤아이 주간업무보고 &gt;&gt;
                   </h1>
-                  <p className="text-xs text-slate-400 font-mono print:text-gray-700">{reportDate}</p>
+                  <p className="text-xs text-slate-400 font-mono print:text-slate-400">{reportDate}</p>
                 </div>
 
                 {/* 팀 주간업무보고서 표준 테이블 */}
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs border-collapse border border-slate-700 print:border-black">
+                  <table className="w-full text-left text-xs border-collapse border border-slate-700 print:border-slate-700">
                     <thead>
-                      <tr className="bg-slate-950 text-slate-200 border-b border-slate-700 font-bold text-center print:bg-gray-200 print:text-black print:border-black">
-                        <th className="py-3 px-3 border border-slate-700 w-24 bg-slate-900 print:bg-gray-100 print:border-black">구분</th>
-                        <th className="py-3 px-6 border border-slate-700 bg-slate-900/80 print:bg-gray-100 print:border-black">지난주 주요 업무</th>
-                        <th className="py-3 px-4 border border-slate-700 w-24 bg-slate-900 print:bg-gray-100 print:border-black">담당</th>
-                        <th className="py-3 px-6 border border-slate-700 bg-slate-900/80 print:bg-gray-100 print:border-black">이번주 예정 업무</th>
-                        <th className="py-3 px-4 border border-slate-700 w-24 bg-slate-900 print:bg-gray-100 print:border-black">담당</th>
+                      <tr className="bg-slate-950 text-slate-200 border-b border-slate-700 font-bold text-center print:bg-slate-950 print:text-slate-200 print:border-slate-700">
+                        <th className="py-3 px-3 border border-slate-700 w-24 bg-slate-900 print:bg-slate-900 print:border-slate-700">구분</th>
+                        <th className="py-3 px-6 border border-slate-700 bg-slate-900/80 print:bg-slate-900 print:border-slate-700">지난주 주요 업무</th>
+                        <th className="py-3 px-4 border border-slate-700 w-24 bg-slate-900 print:bg-slate-900 print:border-slate-700">담당</th>
+                        <th className="py-3 px-6 border border-slate-700 bg-slate-900/80 print:bg-slate-900 print:border-slate-700">이번주 예정 업무</th>
+                        <th className="py-3 px-4 border border-slate-700 w-24 bg-slate-900 print:bg-slate-900 print:border-slate-700">담당</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-700/80 text-slate-200 print:text-black print:divide-black">
+                    <tbody className="divide-y divide-slate-700/80 text-slate-200 print:text-slate-200 print:divide-slate-700">
                       {getSortedTeams(teamReports).map(tName => {
                         const reportsInTeam = teamReports.filter(r => r.teamName === tName);
                         // 직급 순으로 정렬 (이사 > 부장 > 차장 > 과장 > 대리 > 사원)
@@ -688,25 +708,25 @@ export default function App() {
                               {rIdx === 0 && idx === 0 ? (
                                 <td 
                                   rowSpan={sortedReports.reduce((acc, curr) => acc + Math.max(curr.lastWeekTasks.length, curr.thisWeekTasks.length, 1), 0)}
-                                  className="py-3 px-3 text-center font-bold text-blue-300 border border-slate-700 bg-slate-900/40 align-middle print:text-black print:border-black print:bg-gray-50"
+                                  className="py-3 px-3 text-center font-bold text-blue-300 border border-slate-700 bg-slate-900/40 align-middle print:text-blue-300 print:border-slate-700 print:bg-slate-900/40"
                                 >
                                   {tName}
                                 </td>
                               ) : null}
 
-                              <td className="py-2.5 px-4 border border-slate-700 text-slate-300 print:text-black print:border-black">
+                              <td className="py-2.5 px-4 border border-slate-700 text-slate-300 print:text-slate-300 print:border-slate-700">
                                 {rep.lastWeekTasks[idx]?.content || ''}
                               </td>
 
-                              <td className="py-2.5 px-3 text-center font-medium border border-slate-700 text-slate-300 bg-slate-900/20 print:text-black print:border-black print:bg-transparent">
+                              <td className="py-2.5 px-3 text-center font-medium border border-slate-700 text-slate-300 bg-slate-900/20 print:text-slate-300 print:border-slate-700 print:bg-slate-900/20">
                                 {memberDisplay}
                               </td>
 
-                              <td className="py-2.5 px-4 border border-slate-700 text-slate-300 print:text-black print:border-black">
+                              <td className="py-2.5 px-4 border border-slate-700 text-slate-300 print:text-slate-300 print:border-slate-700">
                                 {rep.thisWeekTasks[idx]?.content || ''}
                               </td>
 
-                              <td className="py-2.5 px-3 text-center font-medium border border-slate-700 text-slate-300 bg-slate-900/20 print:text-black print:border-black print:bg-transparent">
+                              <td className="py-2.5 px-3 text-center font-medium border border-slate-700 text-slate-300 bg-slate-900/20 print:text-slate-300 print:border-slate-700 print:bg-slate-900/20">
                                 {memberDisplay}
                               </td>
                             </tr>
@@ -718,21 +738,21 @@ export default function App() {
                 </div>
 
                 {/* 기타 보고사항 중간 독립 섹션 (작성자와 상관없이 팀 전체 통합 표시) */}
-                <div className="pt-2 border-t border-slate-700/60 print:border-black space-y-2">
-                  <h3 className="text-sm font-bold text-slate-200 print:text-black flex items-center gap-2">
+                <div className="pt-2 border-t border-slate-700/60 print:border-slate-700 space-y-2">
+                  <h3 className="text-sm font-bold text-slate-200 print:text-slate-200 flex items-center gap-2">
                     <FileText className="w-4 h-4 text-blue-400 print:hidden" />
                     [ 기타 보고사항 (통합) ]
                   </h3>
-                  <div className="bg-slate-900/60 border border-slate-700 rounded-xl p-4 space-y-2 text-xs text-slate-200 print:bg-gray-50 print:border-black print:text-black">
+                  <div className="bg-slate-900/60 border border-slate-700 rounded-xl p-4 space-y-2 text-xs text-slate-200 print:bg-slate-900 print:border-slate-700 print:text-slate-200">
                     {teamReports.filter(r => r.otherNotes && r.otherNotes.trim() !== '').length === 0 ? (
-                      <p className="text-slate-500 italic print:text-gray-500">등록된 기타 보고사항이 없습니다.</p>
+                      <p className="text-slate-500 italic print:text-slate-500">등록된 기타 보고사항이 없습니다.</p>
                     ) : (
                       <ul className="list-disc list-inside space-y-1.5">
                         {teamReports
                           .filter(r => r.otherNotes && r.otherNotes.trim() !== '')
                           .map(r => (
                             <li key={`note-${r.id}`} className="leading-relaxed">
-                              <span className="font-bold text-blue-300 print:text-black">[{r.teamName} {r.memberName} {r.memberRank}]</span>: {r.otherNotes}
+                              <span className="font-bold text-blue-300 print:text-blue-300">[{r.teamName} {r.memberName} {r.memberRank}]</span>: {r.otherNotes}
                             </li>
                           ))}
                       </ul>
@@ -741,24 +761,24 @@ export default function App() {
                 </div>
 
                 {/* 월~일 외근 및 휴가 현황 통합표 (PDF 인쇄 시 2페이지로 강제 분리) */}
-                <div className="pt-2 border-t border-slate-700/60 print:border-black space-y-3 print:break-before-page print:pt-6">
-                  <h3 className="text-sm font-bold text-slate-200 print:text-black flex items-center gap-2">
+                <div className="pt-2 border-t border-slate-700/60 print:border-slate-700 space-y-3 print:break-before-page print:pt-6">
+                  <h3 className="text-sm font-bold text-slate-200 print:text-slate-200 flex items-center gap-2">
                     <Briefcase className="w-4 h-4 text-amber-400 print:hidden" />
                     [ 금주 외근 및 휴가 현황 (통합) ]
                   </h3>
 
                   <div className="overflow-x-auto">
-                    <table className="w-full text-left text-xs border-collapse border border-slate-700 table-fixed print:border-black">
+                    <table className="w-full text-left text-xs border-collapse border border-slate-700 table-fixed print:border-slate-700">
                       <thead>
-                        <tr className="bg-slate-950 text-slate-200 border-b border-slate-700 font-bold text-center print:bg-gray-200 print:text-black print:border-black">
-                          <th className="py-2.5 px-3 border border-slate-700 w-32 bg-slate-900 print:bg-gray-100 print:border-black">담당자</th>
-                          <th className="py-2.5 px-3 border border-slate-700 w-20 bg-slate-900 print:bg-gray-100 print:border-black">구분</th>
+                        <tr className="bg-slate-950 text-slate-200 border-b border-slate-700 font-bold text-center print:bg-slate-950 print:text-slate-200 print:border-slate-700">
+                          <th className="py-2.5 px-3 border border-slate-700 w-32 bg-slate-900 print:bg-slate-900 print:border-slate-700">담당자</th>
+                          <th className="py-2.5 px-3 border border-slate-700 w-20 bg-slate-900 print:bg-slate-900 print:border-slate-700">구분</th>
                           {daysList.map(d => (
-                            <th key={d} className="py-2.5 px-2 border border-slate-700 bg-slate-900/80 text-center w-28 print:bg-gray-100 print:border-black">{d}</th>
+                            <th key={d} className="py-2.5 px-2 border border-slate-700 bg-slate-900/80 text-center w-28 print:bg-slate-900 print:border-slate-700">{d}</th>
                           ))}
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-700/80 text-slate-200 print:text-black print:divide-black">
+                      <tbody className="divide-y divide-slate-700/80 text-slate-200 print:text-slate-200 print:divide-slate-700">
                         {getSortedTeams(teamReports).map(tName => {
                           const reportsInTeam = teamReports.filter(r => r.teamName === tName);
                           const sortedReports = getSortedReportsByRank(reportsInTeam);
@@ -767,38 +787,38 @@ export default function App() {
                             <React.Fragment key={rep.id}>
                               {/* 외근 일정 Row (텍스트 자동 줄바꿈 및 칸 위아래 자동 확장) */}
                               <tr className="hover:bg-slate-800/40 print:hover:bg-transparent">
-                                <td rowSpan={2} className="py-2 px-3 border border-slate-700 font-bold text-center align-middle bg-slate-900/30 print:border-black print:bg-transparent">
+                                <td rowSpan={2} className="py-2 px-3 border border-slate-700 font-bold text-center align-middle bg-slate-900/30 print:border-slate-700 print:bg-slate-900/30">
                                   {rep.memberName} {rep.memberRank}
-                                  <span className="block text-[10px] text-slate-400 print:text-gray-600 font-normal">{rep.teamName}</span>
+                                  <span className="block text-[10px] text-slate-400 print:text-slate-400 font-normal">{rep.teamName}</span>
                                 </td>
-                                <td className="py-2 px-3 border border-slate-700 font-semibold text-amber-400 text-center bg-slate-900/20 print:text-black print:border-black print:bg-transparent">
+                                <td className="py-2 px-3 border border-slate-700 font-semibold text-amber-400 text-center bg-slate-900/20 print:text-amber-400 print:border-slate-700 print:bg-slate-900/20">
                                   외근
                                 </td>
                                 {daysList.map(day => (
-                                  <td key={day} className="py-2 px-2 border border-slate-700 text-center text-[11px] break-words whitespace-normal leading-tight print:border-black">
+                                  <td key={day} className="py-2 px-2 border border-slate-700 text-center text-[11px] break-words whitespace-normal leading-tight print:border-slate-700">
                                     {rep.weeklyOutings[day]?.active ? (
-                                      <span className="text-amber-300 print:text-black font-medium">
+                                      <span className="text-amber-300 print:text-amber-300 font-medium">
                                         {rep.weeklyOutings[day]?.note || '외근'}
                                       </span>
                                     ) : (
-                                      <span className="text-slate-600 print:text-gray-400">-</span>
+                                      <span className="text-slate-600 print:text-slate-600">-</span>
                                     )}
                                   </td>
                                 ))}
                               </tr>
                               {/* 휴가 일정 Row */}
-                              <tr className="hover:bg-slate-800/40 border-b border-slate-700 print:border-black print:hover:bg-transparent">
-                                <td className="py-2 px-3 border border-slate-700 font-semibold text-purple-400 text-center bg-slate-900/20 print:text-black print:border-black print:bg-transparent">
+                              <tr className="hover:bg-slate-800/40 border-b border-slate-700 print:border-slate-700 print:hover:bg-transparent">
+                                <td className="py-2 px-3 border border-slate-700 font-semibold text-purple-400 text-center bg-slate-900/20 print:text-purple-400 print:border-slate-700 print:bg-slate-900/20">
                                   휴가
                                 </td>
                                 {daysList.map(day => (
-                                  <td key={day} className="py-2 px-2 border border-slate-700 text-center text-[11px] break-words whitespace-normal leading-tight print:border-black">
+                                  <td key={day} className="py-2 px-2 border border-slate-700 text-center text-[11px] break-words whitespace-normal leading-tight print:border-slate-700">
                                     {rep.weeklyVacations[day]?.type !== '없음' ? (
-                                      <span className="bg-purple-950/60 text-purple-300 border border-purple-800/50 px-1.5 py-0.5 rounded font-medium print:bg-transparent print:text-black print:border-none">
+                                      <span className="bg-purple-950/60 text-purple-300 border border-purple-800/50 px-1.5 py-0.5 rounded font-medium print:bg-purple-950 print:text-purple-300 print:border-purple-800">
                                         {rep.weeklyVacations[day]?.type}
                                       </span>
                                     ) : (
-                                      <span className="text-slate-600 print:text-gray-400">-</span>
+                                      <span className="text-slate-600 print:text-slate-600">-</span>
                                     )}
                                   </td>
                                 ))}
