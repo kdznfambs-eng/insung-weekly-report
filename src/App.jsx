@@ -335,7 +335,7 @@ export default function App() {
         @media print {
           @page {
             size: A4 landscape;
-            margin: 12mm 10mm;
+            margin: 10mm 10mm;
           }
           /* Hide browser default header/footer (URL, date/time, document title) */
           head, title {
@@ -349,9 +349,13 @@ export default function App() {
             margin: 0 !important;
             padding: 0 !important;
           }
-          .print\\:break-before-page {
-            break-before: page !important;
+          .print-page-1 {
+            page-break-after: always !important;
+            break-after: page !important;
+          }
+          .print-page-2 {
             page-break-before: always !important;
+            break-before: page !important;
           }
           /* Remove extraneous wrapper borders & outlines when printing */
           .print-clean-container {
@@ -693,95 +697,99 @@ export default function App() {
               </div>
             ) : (
               <div className="bg-white border border-slate-300 rounded-2xl overflow-hidden shadow-sm p-6 space-y-6 print:bg-white print:text-slate-900 print:border-none print:shadow-none print:p-0 print-clean-container">
-                {/* 보고서 상단 타이틀 구조 */}
-                <div className="text-center space-y-1 pb-4 border-b border-slate-200 print:border-slate-300">
-                  <h1 className="text-2xl font-extrabold text-blue-800 tracking-wider print:text-blue-900 print:text-xl">
-                    &lt;&lt; 인성씨앤아이 주간업무보고 &gt;&gt;
-                  </h1>
-                  <p className="text-xs text-slate-500 font-mono print:text-slate-600">{reportDate}</p>
-                </div>
+                
+                {/* 1페이지 영역: 타이틀 + 지난주/이번주 주요업무 + 기타 보고사항 */}
+                <div className="space-y-4 print-page-1">
+                  {/* 보고서 상단 타이틀 구조 */}
+                  <div className="text-center space-y-1 pb-3 border-b border-slate-200 print:border-slate-300">
+                    <h1 className="text-2xl font-extrabold text-blue-800 tracking-wider print:text-blue-900 print:text-xl">
+                      &lt;&lt; 인성씨앤아이 주간업무보고 &gt;&gt;
+                    </h1>
+                    <p className="text-xs text-slate-500 font-mono print:text-slate-600">{reportDate}</p>
+                  </div>
 
-                {/* 팀 주간업무보고서 표준 테이블 */}
-                <div className="overflow-x-auto print:overflow-visible">
-                  <table className="w-full text-left text-xs border-collapse border border-slate-300 print:border-slate-400">
-                    <thead>
-                      <tr className="bg-slate-100 text-slate-800 border-b border-slate-300 font-bold text-center print:bg-slate-100 print:text-slate-900 print:border-slate-400">
-                        <th className="py-3 px-3 border border-slate-300 w-24 bg-slate-200/70 print:bg-slate-200 print:border-slate-400">구분</th>
-                        <th className="py-3 px-6 border border-slate-300 bg-slate-100 print:bg-slate-100 print:border-slate-400">지난주 주요 업무</th>
-                        <th className="py-3 px-4 border border-slate-300 w-24 bg-slate-200/70 print:bg-slate-200 print:border-slate-400">담당</th>
-                        <th className="py-3 px-6 border border-slate-300 bg-slate-100 print:bg-slate-100 print:border-slate-400">이번주 예정 업무</th>
-                        <th className="py-3 px-4 border border-slate-300 w-24 bg-slate-200/70 print:bg-slate-200 print:border-slate-400">담당</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-200 text-slate-800 print:text-slate-900 print:divide-slate-300">
-                      {getSortedTeams(teamReports).map(tName => {
-                        const reportsInTeam = teamReports.filter(r => r.teamName === tName);
-                        // 직급 순으로 정렬 (이사 > 부장 > 차장 > 과장 > 대리 > 사원)
-                        const sortedReports = getSortedReportsByRank(reportsInTeam);
+                  {/* 팀 주간업무보고서 표준 테이블 */}
+                  <div className="overflow-x-auto print:overflow-visible">
+                    <table className="w-full text-left text-xs border-collapse border border-slate-300 print:border-slate-400">
+                      <thead>
+                        <tr className="bg-slate-100 text-slate-800 border-b border-slate-300 font-bold text-center print:bg-slate-100 print:text-slate-900 print:border-slate-400">
+                          <th className="py-2.5 px-3 border border-slate-300 w-24 bg-slate-200/70 print:bg-slate-200 print:border-slate-400">구분</th>
+                          <th className="py-2.5 px-6 border border-slate-300 bg-slate-100 print:bg-slate-100 print:border-slate-400">지난주 주요 업무</th>
+                          <th className="py-2.5 px-4 border border-slate-300 w-24 bg-slate-200/70 print:bg-slate-200 print:border-slate-400">담당</th>
+                          <th className="py-2.5 px-6 border border-slate-300 bg-slate-100 print:bg-slate-100 print:border-slate-400">이번주 예정 업무</th>
+                          <th className="py-2.5 px-4 border border-slate-300 w-24 bg-slate-200/70 print:bg-slate-200 print:border-slate-400">담당</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-200 text-slate-800 print:text-slate-900 print:divide-slate-300">
+                        {getSortedTeams(teamReports).map(tName => {
+                          const reportsInTeam = teamReports.filter(r => r.teamName === tName);
+                          // 직급 순으로 정렬 (이사 > 부장 > 차장 > 과장 > 대리 > 사원)
+                          const sortedReports = getSortedReportsByRank(reportsInTeam);
 
-                        return sortedReports.map((rep, rIdx) => {
-                          const maxRows = Math.max(rep.lastWeekTasks.length, rep.thisWeekTasks.length, 1);
-                          const memberDisplay = `${rep.memberName} ${rep.memberRank}`;
+                          return sortedReports.map((rep, rIdx) => {
+                            const maxRows = Math.max(rep.lastWeekTasks.length, rep.thisWeekTasks.length, 1);
+                            const memberDisplay = `${rep.memberName} ${rep.memberRank}`;
 
-                          return Array.from({ length: maxRows }).map((_, idx) => (
-                            <tr key={`${rep.id}-${idx}`} className="hover:bg-slate-50 transition print:hover:bg-transparent">
-                              {rIdx === 0 && idx === 0 ? (
-                                <td 
-                                  rowSpan={sortedReports.reduce((acc, curr) => acc + Math.max(curr.lastWeekTasks.length, curr.thisWeekTasks.length, 1), 0)}
-                                  className="py-3 px-3 text-center font-bold text-blue-900 border border-slate-300 bg-blue-50/50 align-middle print:text-blue-900 print:border-slate-400 print:bg-blue-50"
-                                >
-                                  {tName}
+                            return Array.from({ length: maxRows }).map((_, idx) => (
+                              <tr key={`${rep.id}-${idx}`} className="hover:bg-slate-50 transition print:hover:bg-transparent">
+                                {rIdx === 0 && idx === 0 ? (
+                                  <td 
+                                    rowSpan={sortedReports.reduce((acc, curr) => acc + Math.max(curr.lastWeekTasks.length, curr.thisWeekTasks.length, 1), 0)}
+                                    className="py-2.5 px-3 text-center font-bold text-blue-900 border border-slate-300 bg-blue-50/50 align-middle print:text-blue-900 print:border-slate-400 print:bg-blue-50"
+                                  >
+                                    {tName}
+                                  </td>
+                                ) : null}
+
+                                <td className="py-2 px-4 border border-slate-300 text-slate-800 print:text-slate-900 print:border-slate-400">
+                                  {rep.lastWeekTasks[idx]?.content || ''}
                                 </td>
-                              ) : null}
 
-                              <td className="py-2.5 px-4 border border-slate-300 text-slate-800 print:text-slate-900 print:border-slate-400">
-                                {rep.lastWeekTasks[idx]?.content || ''}
-                              </td>
+                                <td className="py-2 px-3 text-center font-medium border border-slate-300 text-slate-700 bg-slate-50 print:text-slate-800 print:border-slate-400 print:bg-slate-50">
+                                  {memberDisplay}
+                                </td>
 
-                              <td className="py-2.5 px-3 text-center font-medium border border-slate-300 text-slate-700 bg-slate-50 print:text-slate-800 print:border-slate-400 print:bg-slate-50">
-                                {memberDisplay}
-                              </td>
+                                <td className="py-2 px-4 border border-slate-300 text-slate-800 print:text-slate-900 print:border-slate-400">
+                                  {rep.thisWeekTasks[idx]?.content || ''}
+                                </td>
 
-                              <td className="py-2.5 px-4 border border-slate-300 text-slate-800 print:text-slate-900 print:border-slate-400">
-                                {rep.thisWeekTasks[idx]?.content || ''}
-                              </td>
+                                <td className="py-2 px-3 text-center font-medium border border-slate-300 text-slate-700 bg-slate-50 print:text-slate-800 print:border-slate-400 print:bg-slate-50">
+                                  {memberDisplay}
+                                </td>
+                              </tr>
+                            ));
+                          });
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
 
-                              <td className="py-2.5 px-3 text-center font-medium border border-slate-300 text-slate-700 bg-slate-50 print:text-slate-800 print:border-slate-400 print:bg-slate-50">
-                                {memberDisplay}
-                              </td>
-                            </tr>
-                          ));
-                        });
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* 기타 보고사항 중간 독립 섹션 */}
-                <div className="pt-2 border-t border-slate-200 print:border-none print:pt-2 print-no-border space-y-2">
-                  <h3 className="text-sm font-bold text-slate-800 print:text-slate-900 flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-blue-600 print:hidden" />
-                    [ 기타 보고사항 (통합) ]
-                  </h3>
-                  <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2 text-xs text-slate-800 print:bg-slate-50 print:border-slate-300 print:text-slate-900">
-                    {teamReports.filter(r => r.otherNotes && r.otherNotes.trim() !== '').length === 0 ? (
-                      <p className="text-slate-400 italic print:text-slate-500">등록된 기타 보고사항이 없습니다.</p>
-                    ) : (
-                      <ul className="list-disc list-inside space-y-1.5">
-                        {teamReports
-                          .filter(r => r.otherNotes && r.otherNotes.trim() !== '')
-                          .map(r => (
-                            <li key={`note-${r.id}`} className="leading-relaxed">
-                              <span className="font-bold text-blue-700 print:text-blue-800">[{r.teamName} {r.memberName} {r.memberRank}]</span>: {r.otherNotes}
-                            </li>
-                          ))}
-                      </ul>
-                    )}
+                  {/* 기타 보고사항 중간 독립 섹션 */}
+                  <div className="pt-2 border-t border-slate-200 print:border-none print:pt-1 print-no-border space-y-1.5">
+                    <h3 className="text-sm font-bold text-slate-800 print:text-slate-900 flex items-center gap-2">
+                      <FileText className="w-4 h-4 text-blue-600 print:hidden" />
+                      [ 기타 보고사항 (통합) ]
+                    </h3>
+                    <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-1.5 text-xs text-slate-800 print:bg-slate-50 print:border-slate-300 print:text-slate-900">
+                      {teamReports.filter(r => r.otherNotes && r.otherNotes.trim() !== '').length === 0 ? (
+                        <p className="text-slate-400 italic print:text-slate-500">등록된 기타 보고사항이 없습니다.</p>
+                      ) : (
+                        <ul className="list-disc list-inside space-y-1">
+                          {teamReports
+                            .filter(r => r.otherNotes && r.otherNotes.trim() !== '')
+                            .map(r => (
+                              <li key={`note-${r.id}`} className="leading-relaxed">
+                                <span className="font-bold text-blue-700 print:text-blue-800">[{r.teamName} {r.memberName} {r.memberRank}]</span>: {r.otherNotes}
+                              </li>
+                            ))}
+                        </ul>
+                      )}
+                    </div>
                   </div>
                 </div>
 
-                {/* 월~일 외근 및 휴가 현황 통합표 (가로 출력 시 2번째 페이지 상단 출력) */}
-                <div className="pt-2 border-t border-slate-200 print:border-none print:pt-0 print-no-border space-y-3 print:break-before-page">
+                {/* 2페이지 영역: 금주 외근 및 휴가 현황 통합표 */}
+                <div className="pt-2 border-t border-slate-200 print:border-none print:pt-0 print-no-border space-y-3 print-page-2">
                   <h3 className="text-sm font-bold text-slate-800 print:text-slate-900 flex items-center gap-2">
                     <Briefcase className="w-4 h-4 text-amber-600 print:hidden" />
                     [ 금주 외근 및 휴가 현황 (통합) ]
