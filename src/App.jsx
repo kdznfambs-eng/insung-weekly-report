@@ -339,7 +339,7 @@ export default function App() {
             </div>
             <div>
               <h1 className="font-bold text-base sm:text-lg text-white leading-tight">
-                인성씨앤아이 주간업무보고 생성기
+                인성씨앤아이 주간업무보고
               </h1>
               <p className="text-[11px] text-slate-400">Smart Weekly Task Reporter</p>
             </div>
@@ -619,7 +619,7 @@ export default function App() {
               className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl shadow-xl transition text-sm flex items-center justify-center gap-2"
             >
               <FileText className="w-4 h-4" />
-              <span>팀 취합 목록에 등록 (등록 후 초기화됩니다)</span>
+              <span>팀 취합 목록에 등록</span>
             </button>
           </div>
         )}
@@ -633,9 +633,6 @@ export default function App() {
                   <Building2 className="w-6 h-6 text-blue-400" />
                   팀 주간업무보고서 (통합 보고서)
                 </h2>
-                <p className="text-xs text-slate-400 mt-1">
-                  설계팀이 항상 상단에 위치하며, 직급(이사 &gt; 부장 &gt; 차장 &gt; 과장 &gt; 대리 &gt; 사원) 순서대로 정렬됩니다.
-                </p>
               </div>
               <button
                 onClick={handlePrintPDF}
@@ -743,8 +740,8 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* 월~일 외근 및 휴가 현황 통합표 (간격 고정 table-fixed 및 w-28 적용) */}
-                <div className="pt-2 border-t border-slate-700/60 print:border-black space-y-3">
+                {/* 월~일 외근 및 휴가 현황 통합표 (PDF 인쇄 시 2페이지로 강제 분리) */}
+                <div className="pt-2 border-t border-slate-700/60 print:border-black space-y-3 print:break-before-page print:pt-6">
                   <h3 className="text-sm font-bold text-slate-200 print:text-black flex items-center gap-2">
                     <Briefcase className="w-4 h-4 text-amber-400 print:hidden" />
                     [ 금주 외근 및 휴가 현황 (통합) ]
@@ -768,7 +765,7 @@ export default function App() {
 
                           return sortedReports.map(rep => (
                             <React.Fragment key={rep.id}>
-                              {/* 외근 일정 Row */}
+                              {/* 외근 일정 Row (텍스트 자동 줄바꿈 및 칸 위아래 자동 확장) */}
                               <tr className="hover:bg-slate-800/40 print:hover:bg-transparent">
                                 <td rowSpan={2} className="py-2 px-3 border border-slate-700 font-bold text-center align-middle bg-slate-900/30 print:border-black print:bg-transparent">
                                   {rep.memberName} {rep.memberRank}
@@ -778,7 +775,7 @@ export default function App() {
                                   외근
                                 </td>
                                 {daysList.map(day => (
-                                  <td key={day} className="py-2 px-2 border border-slate-700 text-center text-[11px] truncate print:border-black">
+                                  <td key={day} className="py-2 px-2 border border-slate-700 text-center text-[11px] break-words whitespace-normal leading-tight print:border-black">
                                     {rep.weeklyOutings[day]?.active ? (
                                       <span className="text-amber-300 print:text-black font-medium">
                                         {rep.weeklyOutings[day]?.note || '외근'}
@@ -795,7 +792,7 @@ export default function App() {
                                   휴가
                                 </td>
                                 {daysList.map(day => (
-                                  <td key={day} className="py-2 px-2 border border-slate-700 text-center text-[11px] truncate print:border-black">
+                                  <td key={day} className="py-2 px-2 border border-slate-700 text-center text-[11px] break-words whitespace-normal leading-tight print:border-black">
                                     {rep.weeklyVacations[day]?.type !== '없음' ? (
                                       <span className="bg-purple-950/60 text-purple-300 border border-purple-800/50 px-1.5 py-0.5 rounded font-medium print:bg-transparent print:text-black print:border-none">
                                         {rep.weeklyVacations[day]?.type}
