@@ -335,7 +335,7 @@ export default function App() {
         @media print {
           @page {
             size: A4 landscape;
-            margin: 8mm;
+            margin: 10mm;
           }
           body {
             -webkit-print-color-adjust: exact !important;
@@ -346,6 +346,20 @@ export default function App() {
           .print\\:break-before-page {
             break-before: page !important;
             page-break-before: always !important;
+          }
+          /* Remove extraneous wrapper borders & outlines when printing */
+          .print-clean-container {
+            border: none !important;
+            box-shadow: none !important;
+            border-radius: 0 !important;
+            padding: 0 !important;
+            margin: 0 !important;
+          }
+          .print-no-border {
+            border: none !important;
+            border-top: none !important;
+            border-bottom: none !important;
+            padding-top: 0 !important;
           }
         }
       `}</style>
@@ -672,7 +686,7 @@ export default function App() {
                 </p>
               </div>
             ) : (
-              <div className="bg-white border border-slate-300 rounded-2xl overflow-hidden shadow-sm p-6 space-y-6 print:bg-white print:text-slate-900 print:border-slate-400 print:shadow-none print:p-0">
+              <div className="bg-white border border-slate-300 rounded-2xl overflow-hidden shadow-sm p-6 space-y-6 print:bg-white print:text-slate-900 print:border-none print:shadow-none print:p-0 print-clean-container">
                 {/* 보고서 상단 타이틀 구조 */}
                 <div className="text-center space-y-1 pb-4 border-b border-slate-200 print:border-slate-300">
                   <h1 className="text-2xl font-extrabold text-blue-800 tracking-wider print:text-blue-900 print:text-xl">
@@ -682,7 +696,7 @@ export default function App() {
                 </div>
 
                 {/* 팀 주간업무보고서 표준 테이블 */}
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto print:overflow-visible">
                   <table className="w-full text-left text-xs border-collapse border border-slate-300 print:border-slate-400">
                     <thead>
                       <tr className="bg-slate-100 text-slate-800 border-b border-slate-300 font-bold text-center print:bg-slate-100 print:text-slate-900 print:border-slate-400">
@@ -738,7 +752,7 @@ export default function App() {
                 </div>
 
                 {/* 기타 보고사항 중간 독립 섹션 */}
-                <div className="pt-2 border-t border-slate-200 print:border-slate-300 space-y-2">
+                <div className="pt-2 border-t border-slate-200 print:border-none print:pt-2 print-no-border space-y-2">
                   <h3 className="text-sm font-bold text-slate-800 print:text-slate-900 flex items-center gap-2">
                     <FileText className="w-4 h-4 text-blue-600 print:hidden" />
                     [ 기타 보고사항 (통합) ]
@@ -761,13 +775,13 @@ export default function App() {
                 </div>
 
                 {/* 월~일 외근 및 휴가 현황 통합표 (가로 출력 시 2번째 페이지 상단 출력) */}
-                <div className="pt-2 border-t border-slate-200 print:border-slate-300 space-y-3 print:break-before-page">
+                <div className="pt-2 border-t border-slate-200 print:border-none print:pt-0 print-no-border space-y-3 print:break-before-page">
                   <h3 className="text-sm font-bold text-slate-800 print:text-slate-900 flex items-center gap-2">
                     <Briefcase className="w-4 h-4 text-amber-600 print:hidden" />
                     [ 금주 외근 및 휴가 현황 (통합) ]
                   </h3>
 
-                  <div className="overflow-x-auto">
+                  <div className="overflow-x-auto print:overflow-visible">
                     <table className="w-full text-left text-xs border-collapse border border-slate-300 table-fixed print:border-slate-400">
                       <thead>
                         <tr className="bg-slate-100 text-slate-800 border-b border-slate-300 font-bold text-center print:bg-slate-100 print:text-slate-900 print:border-slate-400">
