@@ -523,7 +523,6 @@ export default function App() {
                   <Briefcase className="w-4 h-4 text-amber-400" />
                   금주 외근 일정
                 </h3>
-                <p className="text-xs text-slate-400 mt-1">세로 목록 형태로 외근 내용이 더욱 가독성 높게 표시됩니다.</p>
               </div>
 
               <div className="space-y-2.5">
