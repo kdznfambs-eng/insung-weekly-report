@@ -329,19 +329,19 @@ export default function App() {
   const vacationOptions = ['없음', '연차', '오전반차', '오후반차', '대체 휴무', '공가', '병가', '경조휴가'];
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 font-sans pb-12 print:bg-slate-900 print:text-slate-100 print:pb-0">
-      {/* Print-specific style override for maintaining exact dark dashboard theme on PDF output */}
+    <div className="min-h-screen bg-slate-100 text-slate-800 font-sans pb-12 print:bg-white print:text-slate-900 print:pb-0">
+      {/* Print-specific style override for maintaining clean A4 Landscape PDF output */}
       <style>{`
         @media print {
           @page {
-            size: A4 portrait;
-            margin: 10mm;
+            size: A4 landscape;
+            margin: 8mm;
           }
           body {
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
-            background-color: #0f172a !important;
-            color: #f8fafc !important;
+            background-color: #ffffff !important;
+            color: #0f172a !important;
           }
           .print\\:break-before-page {
             break-before: page !important;
@@ -351,27 +351,27 @@ export default function App() {
       `}</style>
 
       {/* Header Bar - Hidden on print */}
-      <header className="bg-slate-800 border-b border-slate-700 sticky top-0 z-30 shadow-md print:hidden">
+      <header className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm print:hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="bg-blue-600 p-2 rounded-xl text-white shadow-lg shadow-blue-500/30">
+            <div className="bg-blue-600 p-2 rounded-xl text-white shadow-md shadow-blue-500/20">
               <Building2 className="w-5 h-5" />
             </div>
             <div>
-              <h1 className="font-bold text-base sm:text-lg text-white leading-tight">
+              <h1 className="font-bold text-base sm:text-lg text-slate-800 leading-tight">
                 인성씨앤아이 주간업무보고
               </h1>
-              <p className="text-[11px] text-slate-400">Smart Weekly Task Reporter</p>
+              <p className="text-[11px] text-slate-500">Smart Weekly Task Reporter</p>
             </div>
           </div>
 
-          <div className="flex bg-slate-900 p-1 rounded-xl border border-slate-700">
+          <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200">
             <button
               onClick={() => setActiveTab('form')}
               className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
                 activeTab === 'form' 
                   ? 'bg-blue-600 text-white shadow-sm' 
-                  : 'text-slate-400 hover:text-slate-200'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               <FileText className="w-3.5 h-3.5" />
@@ -382,7 +382,7 @@ export default function App() {
               className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
                 activeTab === 'dashboard' 
                   ? 'bg-blue-600 text-white shadow-sm' 
-                  : 'text-slate-400 hover:text-slate-200'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               <LayoutDashboard className="w-3.5 h-3.5" />
@@ -393,7 +393,7 @@ export default function App() {
               className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
                 activeTab === 'view' 
                   ? 'bg-blue-600 text-white shadow-sm' 
-                  : 'text-slate-400 hover:text-slate-200'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               <Eye className="w-3.5 h-3.5" />
@@ -410,22 +410,22 @@ export default function App() {
         {activeTab === 'form' && (
           <div className="space-y-6 max-w-4xl mx-auto">
             {/* 기본 정보 설정 */}
-            <div className="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-6 shadow-xl space-y-4">
-              <div className="border-b border-slate-700 pb-3">
-                <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                  <User className="w-5 h-5 text-blue-400" />
+            <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
+              <div className="border-b border-slate-100 pb-3">
+                <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                  <User className="w-5 h-5 text-blue-600" />
                   기본 정보 입력
                 </h2>
-                <p className="text-xs text-slate-400">소속 팀명, 담당자 성명 및 직급을 입력해주세요.</p>
+                <p className="text-xs text-slate-500">소속 팀명, 담당자 성명 및 직급을 입력해주세요.</p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">소속 팀명</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1.5">소속 팀명</label>
                   <select 
                     value={teamName} 
                     onChange={(e) => setTeamName(e.target.value)}
-                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-slate-100 focus:outline-none focus:border-blue-500"
+                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-xs text-slate-800 focus:outline-none focus:border-blue-500 focus:bg-white"
                   >
                     <option value="설계팀">설계팀</option>
                     <option value="시운전팀">시운전팀</option>
@@ -434,22 +434,22 @@ export default function App() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">담당자 성명</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1.5">담당자 성명</label>
                   <input 
                     type="text" 
                     placeholder="예: 홍길동"
                     value={memberName}
                     onChange={(e) => setMemberName(e.target.value)}
-                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-slate-100 focus:outline-none focus:border-blue-500"
+                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-xs text-slate-800 focus:outline-none focus:border-blue-500 focus:bg-white"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">직급</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1.5">직급</label>
                   <select 
                     value={memberRank} 
                     onChange={(e) => setMemberRank(e.target.value)}
-                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-slate-100 focus:outline-none focus:border-blue-500"
+                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-xs text-slate-800 focus:outline-none focus:border-blue-500 focus:bg-white"
                   >
                     {rankOptions.map(rank => (
                       <option key={rank} value={rank}>{rank}</option>
@@ -458,22 +458,22 @@ export default function App() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">작성 일자</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1.5">작성 일자</label>
                   <input 
                     type="date" 
                     value={reportDate}
                     onChange={(e) => setReportDate(e.target.value)}
-                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-slate-100 focus:outline-none focus:border-blue-500"
+                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-xs text-slate-800 focus:outline-none focus:border-blue-500 focus:bg-white"
                   />
                 </div>
               </div>
             </div>
 
             {/* 지난주 주요 업무 */}
-            <div className="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-6 shadow-xl space-y-4">
-              <div className="border-b border-slate-700 pb-3">
-                <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+            <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
+              <div className="border-b border-slate-100 pb-3">
+                <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                   지난주 주요 업무
                 </h3>
               </div>
@@ -487,7 +487,7 @@ export default function App() {
                       placeholder={`주요 업무 ${index + 1} 내용 입력`}
                       value={task.content}
                       onChange={(e) => handleTaskChange('last', index, e.target.value)}
-                      className="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-blue-500"
+                      className="flex-1 bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none focus:border-blue-500 focus:bg-white"
                     />
                   </div>
                 ))}
@@ -495,10 +495,10 @@ export default function App() {
             </div>
 
             {/* 이번주 예정 업무 */}
-            <div className="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-6 shadow-xl space-y-4">
-              <div className="border-b border-slate-700 pb-3">
-                <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-blue-400" />
+            <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
+              <div className="border-b border-slate-100 pb-3">
+                <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-blue-600" />
                   이번주 예정 업무
                 </h3>
               </div>
@@ -512,7 +512,7 @@ export default function App() {
                       placeholder={`예정 업무 ${index + 1} 내용 입력`}
                       value={task.content}
                       onChange={(e) => handleTaskChange('this', index, e.target.value)}
-                      className="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-blue-500"
+                      className="flex-1 bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none focus:border-blue-500 focus:bg-white"
                     />
                   </div>
                 ))}
@@ -520,10 +520,10 @@ export default function App() {
             </div>
 
             {/* 기타 보고사항 입력 */}
-            <div className="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-6 shadow-xl space-y-4">
-              <div className="border-b border-slate-700 pb-3">
-                <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
-                  <FileText className="w-4 h-4 text-slate-400" />
+            <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
+              <div className="border-b border-slate-100 pb-3">
+                <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-slate-500" />
                   기타 보고사항
                 </h3>
               </div>
@@ -532,15 +532,15 @@ export default function App() {
                 placeholder="건의사항, 이슈, 요청사항 등 기타 보고할 내용이 있을 경우 자유롭게 작성해 주세요."
                 value={otherNotes}
                 onChange={(e) => setOtherNotes(e.target.value)}
-                className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-xs text-slate-100 focus:outline-none focus:border-blue-500"
+                className="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-xs text-slate-800 focus:outline-none focus:border-blue-500 focus:bg-white"
               />
             </div>
 
-            {/* 금주 외근 일정 (월~일 세로 배치로 변경) */}
-            <div className="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-6 shadow-xl space-y-4">
-              <div className="border-b border-slate-700 pb-3">
-                <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
-                  <Briefcase className="w-4 h-4 text-amber-400" />
+            {/* 금주 외근 일정 */}
+            <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
+              <div className="border-b border-slate-100 pb-3">
+                <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                  <Briefcase className="w-4 h-4 text-amber-600" />
                   금주 외근 일정
                 </h3>
               </div>
@@ -551,8 +551,8 @@ export default function App() {
                     key={day} 
                     className={`p-3 rounded-xl border transition flex items-center gap-3 ${
                       weeklyOutings[day].active 
-                        ? 'bg-amber-950/30 border-amber-500/50' 
-                        : 'bg-slate-900/50 border-slate-800'
+                        ? 'bg-amber-50 border-amber-300' 
+                        : 'bg-slate-50 border-slate-200'
                     }`}
                   >
                     <div className="flex items-center gap-2 w-24 shrink-0">
@@ -563,7 +563,7 @@ export default function App() {
                         onChange={() => handleOutingToggle(day)}
                         className="w-4 h-4 rounded text-amber-600 focus:ring-amber-500"
                       />
-                      <label htmlFor={`outing-${day}`} className="text-xs font-bold text-slate-200 cursor-pointer">
+                      <label htmlFor={`outing-${day}`} className="text-xs font-bold text-slate-700 cursor-pointer">
                         {day}요일
                       </label>
                     </div>
@@ -574,24 +574,24 @@ export default function App() {
                         placeholder={`${day}요일 외근장소 및 세부내용 입력`}
                         value={weeklyOutings[day].note}
                         onChange={(e) => handleOutingNoteChange(day, e.target.value)}
-                        className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-amber-500"
+                        className="flex-1 bg-white border border-amber-300 rounded-lg px-3 py-1.5 text-xs text-slate-800 focus:outline-none focus:border-amber-500"
                       />
                     ) : (
-                      <span className="text-xs text-slate-500 italic">외근 없음</span>
+                      <span className="text-xs text-slate-400 italic">외근 없음</span>
                     )}
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* 금주 휴가 일정 (대체 휴무 추가 및 선택 시 강조 색상 적용) */}
-            <div className="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-6 shadow-xl space-y-4">
-              <div className="border-b border-slate-700 pb-3">
-                <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
-                  <Plane className="w-4 h-4 text-purple-400" />
+            {/* 금주 휴가 일정 */}
+            <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
+              <div className="border-b border-slate-100 pb-3">
+                <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                  <Plane className="w-4 h-4 text-purple-600" />
                   금주 휴가 일정
                 </h3>
-                <p className="text-xs text-slate-400 mt-1">휴가 선택 시 보라색으로 강조 표시됩니다.</p>
+                <p className="text-xs text-slate-500 mt-1">휴가 선택 시 보라색 강조 효과가 적용됩니다.</p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-7 gap-2">
@@ -602,16 +602,16 @@ export default function App() {
                       key={day} 
                       className={`p-3 border rounded-xl space-y-2 transition ${
                         isVacationSelected 
-                          ? 'bg-purple-950/40 border-purple-500 shadow-md shadow-purple-900/20' 
-                          : 'bg-slate-900/50 border-slate-800'
+                          ? 'bg-purple-50 border-purple-300 shadow-sm' 
+                          : 'bg-slate-50 border-slate-200'
                       }`}
                     >
                       <div className="flex items-center justify-between">
-                        <span className={`text-xs font-bold ${isVacationSelected ? 'text-purple-300' : 'text-slate-200'}`}>
+                        <span className={`text-xs font-bold ${isVacationSelected ? 'text-purple-700' : 'text-slate-700'}`}>
                           {day}요일
                         </span>
                         {isVacationSelected && (
-                          <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse"></span>
+                          <span className="w-2 h-2 rounded-full bg-purple-500 animate-pulse"></span>
                         )}
                       </div>
                       <select
@@ -619,8 +619,8 @@ export default function App() {
                         onChange={(e) => handleVacationTypeChange(day, e.target.value)}
                         className={`w-full border rounded-lg p-1.5 text-[11px] focus:outline-none ${
                           isVacationSelected 
-                            ? 'bg-purple-900/80 border-purple-500 text-purple-100 font-semibold' 
-                            : 'bg-slate-900 border-slate-700 text-slate-100 focus:border-purple-500'
+                            ? 'bg-purple-100 border-purple-400 text-purple-900 font-semibold' 
+                            : 'bg-white border-slate-300 text-slate-800 focus:border-purple-500'
                         }`}
                       >
                         {vacationOptions.map(opt => (
@@ -636,7 +636,7 @@ export default function App() {
             {/* 제출 버튼 */}
             <button
               onClick={handleSaveToDashboard}
-              className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl shadow-xl transition text-sm flex items-center justify-center gap-2"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-md transition text-sm flex items-center justify-center gap-2"
             >
               <FileText className="w-4 h-4" />
               <span>팀 취합 목록에 등록</span>
@@ -647,16 +647,16 @@ export default function App() {
         {/* TAB 2: CONSOLIDATED MASTER REPORT VIEW */}
         {activeTab === 'view' && (
           <div className="space-y-6">
-            <div className="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-6 shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 print:hidden">
+            <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 print:hidden">
               <div>
-                <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                  <Building2 className="w-6 h-6 text-blue-400" />
+                <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+                  <Building2 className="w-6 h-6 text-blue-600" />
                   팀 주간업무보고서
                 </h2>
               </div>
               <button
                 onClick={handlePrintPDF}
-                className="bg-red-600 hover:bg-red-500 text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-lg transition flex items-center gap-2"
+                className="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-md transition flex items-center gap-2"
               >
                 <Printer className="w-4 h-4" />
                 <span>주간업무보고서 PDF 인쇄</span>
@@ -664,36 +664,36 @@ export default function App() {
             </div>
 
             {teamReports.length === 0 ? (
-              <div className="bg-slate-800/40 border border-dashed border-slate-700 rounded-2xl p-12 text-center text-slate-400 space-y-3 print:hidden">
-                <FileText className="w-12 h-12 mx-auto text-slate-600" />
+              <div className="bg-white border border-dashed border-slate-300 rounded-2xl p-12 text-center text-slate-500 space-y-3 print:hidden">
+                <FileText className="w-12 h-12 mx-auto text-slate-400" />
                 <p className="text-sm font-medium">취합된 주간업무보고서 데이터가 없습니다.</p>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-slate-400">
                   '보고서 작성' 탭에서 주간보고서를 등록해 주세요.
                 </p>
               </div>
             ) : (
-              <div className="bg-slate-800/90 border border-slate-700 rounded-2xl overflow-hidden shadow-2xl p-6 space-y-6 print:bg-slate-900 print:text-slate-100 print:border-slate-700 print:shadow-none print:p-0">
+              <div className="bg-white border border-slate-300 rounded-2xl overflow-hidden shadow-sm p-6 space-y-6 print:bg-white print:text-slate-900 print:border-slate-400 print:shadow-none print:p-0">
                 {/* 보고서 상단 타이틀 구조 */}
-                <div className="text-center space-y-1 pb-4 border-b border-slate-700 print:border-slate-700">
-                  <h1 className="text-2xl font-extrabold text-blue-400 tracking-wider print:text-blue-400 print:text-xl">
+                <div className="text-center space-y-1 pb-4 border-b border-slate-200 print:border-slate-300">
+                  <h1 className="text-2xl font-extrabold text-blue-800 tracking-wider print:text-blue-900 print:text-xl">
                     &lt;&lt; 인성씨앤아이 주간업무보고 &gt;&gt;
                   </h1>
-                  <p className="text-xs text-slate-400 font-mono print:text-slate-400">{reportDate}</p>
+                  <p className="text-xs text-slate-500 font-mono print:text-slate-600">{reportDate}</p>
                 </div>
 
                 {/* 팀 주간업무보고서 표준 테이블 */}
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs border-collapse border border-slate-700 print:border-slate-700">
+                  <table className="w-full text-left text-xs border-collapse border border-slate-300 print:border-slate-400">
                     <thead>
-                      <tr className="bg-slate-950 text-slate-200 border-b border-slate-700 font-bold text-center print:bg-slate-950 print:text-slate-200 print:border-slate-700">
-                        <th className="py-3 px-3 border border-slate-700 w-24 bg-slate-900 print:bg-slate-900 print:border-slate-700">구분</th>
-                        <th className="py-3 px-6 border border-slate-700 bg-slate-900/80 print:bg-slate-900 print:border-slate-700">지난주 주요 업무</th>
-                        <th className="py-3 px-4 border border-slate-700 w-24 bg-slate-900 print:bg-slate-900 print:border-slate-700">담당</th>
-                        <th className="py-3 px-6 border border-slate-700 bg-slate-900/80 print:bg-slate-900 print:border-slate-700">이번주 예정 업무</th>
-                        <th className="py-3 px-4 border border-slate-700 w-24 bg-slate-900 print:bg-slate-900 print:border-slate-700">담당</th>
+                      <tr className="bg-slate-100 text-slate-800 border-b border-slate-300 font-bold text-center print:bg-slate-100 print:text-slate-900 print:border-slate-400">
+                        <th className="py-3 px-3 border border-slate-300 w-24 bg-slate-200/70 print:bg-slate-200 print:border-slate-400">구분</th>
+                        <th className="py-3 px-6 border border-slate-300 bg-slate-100 print:bg-slate-100 print:border-slate-400">지난주 주요 업무</th>
+                        <th className="py-3 px-4 border border-slate-300 w-24 bg-slate-200/70 print:bg-slate-200 print:border-slate-400">담당</th>
+                        <th className="py-3 px-6 border border-slate-300 bg-slate-100 print:bg-slate-100 print:border-slate-400">이번주 예정 업무</th>
+                        <th className="py-3 px-4 border border-slate-300 w-24 bg-slate-200/70 print:bg-slate-200 print:border-slate-400">담당</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-700/80 text-slate-200 print:text-slate-200 print:divide-slate-700">
+                    <tbody className="divide-y divide-slate-200 text-slate-800 print:text-slate-900 print:divide-slate-300">
                       {getSortedTeams(teamReports).map(tName => {
                         const reportsInTeam = teamReports.filter(r => r.teamName === tName);
                         // 직급 순으로 정렬 (이사 > 부장 > 차장 > 과장 > 대리 > 사원)
@@ -704,29 +704,29 @@ export default function App() {
                           const memberDisplay = `${rep.memberName} ${rep.memberRank}`;
 
                           return Array.from({ length: maxRows }).map((_, idx) => (
-                            <tr key={`${rep.id}-${idx}`} className="hover:bg-slate-800/50 transition print:hover:bg-transparent">
+                            <tr key={`${rep.id}-${idx}`} className="hover:bg-slate-50 transition print:hover:bg-transparent">
                               {rIdx === 0 && idx === 0 ? (
                                 <td 
                                   rowSpan={sortedReports.reduce((acc, curr) => acc + Math.max(curr.lastWeekTasks.length, curr.thisWeekTasks.length, 1), 0)}
-                                  className="py-3 px-3 text-center font-bold text-blue-300 border border-slate-700 bg-slate-900/40 align-middle print:text-blue-300 print:border-slate-700 print:bg-slate-900/40"
+                                  className="py-3 px-3 text-center font-bold text-blue-900 border border-slate-300 bg-blue-50/50 align-middle print:text-blue-900 print:border-slate-400 print:bg-blue-50"
                                 >
                                   {tName}
                                 </td>
                               ) : null}
 
-                              <td className="py-2.5 px-4 border border-slate-700 text-slate-300 print:text-slate-300 print:border-slate-700">
+                              <td className="py-2.5 px-4 border border-slate-300 text-slate-800 print:text-slate-900 print:border-slate-400">
                                 {rep.lastWeekTasks[idx]?.content || ''}
                               </td>
 
-                              <td className="py-2.5 px-3 text-center font-medium border border-slate-700 text-slate-300 bg-slate-900/20 print:text-slate-300 print:border-slate-700 print:bg-slate-900/20">
+                              <td className="py-2.5 px-3 text-center font-medium border border-slate-300 text-slate-700 bg-slate-50 print:text-slate-800 print:border-slate-400 print:bg-slate-50">
                                 {memberDisplay}
                               </td>
 
-                              <td className="py-2.5 px-4 border border-slate-700 text-slate-300 print:text-slate-300 print:border-slate-700">
+                              <td className="py-2.5 px-4 border border-slate-300 text-slate-800 print:text-slate-900 print:border-slate-400">
                                 {rep.thisWeekTasks[idx]?.content || ''}
                               </td>
 
-                              <td className="py-2.5 px-3 text-center font-medium border border-slate-700 text-slate-300 bg-slate-900/20 print:text-slate-300 print:border-slate-700 print:bg-slate-900/20">
+                              <td className="py-2.5 px-3 text-center font-medium border border-slate-300 text-slate-700 bg-slate-50 print:text-slate-800 print:border-slate-400 print:bg-slate-50">
                                 {memberDisplay}
                               </td>
                             </tr>
@@ -737,22 +737,22 @@ export default function App() {
                   </table>
                 </div>
 
-                {/* 기타 보고사항 중간 독립 섹션 (작성자와 상관없이 팀 전체 통합 표시) */}
-                <div className="pt-2 border-t border-slate-700/60 print:border-slate-700 space-y-2">
-                  <h3 className="text-sm font-bold text-slate-200 print:text-slate-200 flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-blue-400 print:hidden" />
+                {/* 기타 보고사항 중간 독립 섹션 */}
+                <div className="pt-2 border-t border-slate-200 print:border-slate-300 space-y-2">
+                  <h3 className="text-sm font-bold text-slate-800 print:text-slate-900 flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-blue-600 print:hidden" />
                     [ 기타 보고사항 (통합) ]
                   </h3>
-                  <div className="bg-slate-900/60 border border-slate-700 rounded-xl p-4 space-y-2 text-xs text-slate-200 print:bg-slate-900 print:border-slate-700 print:text-slate-200">
+                  <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2 text-xs text-slate-800 print:bg-slate-50 print:border-slate-300 print:text-slate-900">
                     {teamReports.filter(r => r.otherNotes && r.otherNotes.trim() !== '').length === 0 ? (
-                      <p className="text-slate-500 italic print:text-slate-500">등록된 기타 보고사항이 없습니다.</p>
+                      <p className="text-slate-400 italic print:text-slate-500">등록된 기타 보고사항이 없습니다.</p>
                     ) : (
                       <ul className="list-disc list-inside space-y-1.5">
                         {teamReports
                           .filter(r => r.otherNotes && r.otherNotes.trim() !== '')
                           .map(r => (
                             <li key={`note-${r.id}`} className="leading-relaxed">
-                              <span className="font-bold text-blue-300 print:text-blue-300">[{r.teamName} {r.memberName} {r.memberRank}]</span>: {r.otherNotes}
+                              <span className="font-bold text-blue-700 print:text-blue-800">[{r.teamName} {r.memberName} {r.memberRank}]</span>: {r.otherNotes}
                             </li>
                           ))}
                       </ul>
@@ -760,65 +760,65 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* 월~일 외근 및 휴가 현황 통합표 (PDF 인쇄 시 2페이지로 강제 분리) */}
-                <div className="pt-2 border-t border-slate-700/60 print:border-slate-700 space-y-3 print:break-before-page print:pt-6">
-                  <h3 className="text-sm font-bold text-slate-200 print:text-slate-200 flex items-center gap-2">
-                    <Briefcase className="w-4 h-4 text-amber-400 print:hidden" />
+                {/* 월~일 외근 및 휴가 현황 통합표 (가로 출력에 최적화) */}
+                <div className="pt-2 border-t border-slate-200 print:border-slate-300 space-y-3">
+                  <h3 className="text-sm font-bold text-slate-800 print:text-slate-900 flex items-center gap-2">
+                    <Briefcase className="w-4 h-4 text-amber-600 print:hidden" />
                     [ 금주 외근 및 휴가 현황 (통합) ]
                   </h3>
 
                   <div className="overflow-x-auto">
-                    <table className="w-full text-left text-xs border-collapse border border-slate-700 table-fixed print:border-slate-700">
+                    <table className="w-full text-left text-xs border-collapse border border-slate-300 table-fixed print:border-slate-400">
                       <thead>
-                        <tr className="bg-slate-950 text-slate-200 border-b border-slate-700 font-bold text-center print:bg-slate-950 print:text-slate-200 print:border-slate-700">
-                          <th className="py-2.5 px-3 border border-slate-700 w-32 bg-slate-900 print:bg-slate-900 print:border-slate-700">담당자</th>
-                          <th className="py-2.5 px-3 border border-slate-700 w-20 bg-slate-900 print:bg-slate-900 print:border-slate-700">구분</th>
+                        <tr className="bg-slate-100 text-slate-800 border-b border-slate-300 font-bold text-center print:bg-slate-100 print:text-slate-900 print:border-slate-400">
+                          <th className="py-2.5 px-3 border border-slate-300 w-32 bg-slate-200/70 print:bg-slate-200 print:border-slate-400">담당자</th>
+                          <th className="py-2.5 px-3 border border-slate-300 w-20 bg-slate-200/70 print:bg-slate-200 print:border-slate-400">구분</th>
                           {daysList.map(d => (
-                            <th key={d} className="py-2.5 px-2 border border-slate-700 bg-slate-900/80 text-center w-28 print:bg-slate-900 print:border-slate-700">{d}</th>
+                            <th key={d} className="py-2.5 px-2 border border-slate-300 bg-slate-100 text-center w-28 print:bg-slate-100 print:border-slate-400">{d}</th>
                           ))}
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-700/80 text-slate-200 print:text-slate-200 print:divide-slate-700">
+                      <tbody className="divide-y divide-slate-200 text-slate-800 print:text-slate-900 print:divide-slate-300">
                         {getSortedTeams(teamReports).map(tName => {
                           const reportsInTeam = teamReports.filter(r => r.teamName === tName);
                           const sortedReports = getSortedReportsByRank(reportsInTeam);
 
                           return sortedReports.map(rep => (
                             <React.Fragment key={rep.id}>
-                              {/* 외근 일정 Row (텍스트 자동 줄바꿈 및 칸 위아래 자동 확장) */}
-                              <tr className="hover:bg-slate-800/40 print:hover:bg-transparent">
-                                <td rowSpan={2} className="py-2 px-3 border border-slate-700 font-bold text-center align-middle bg-slate-900/30 print:border-slate-700 print:bg-slate-900/30">
+                              {/* 외근 일정 Row */}
+                              <tr className="hover:bg-slate-50 print:hover:bg-transparent">
+                                <td rowSpan={2} className="py-2 px-3 border border-slate-300 font-bold text-center align-middle bg-slate-50 print:border-slate-400 print:bg-slate-50">
                                   {rep.memberName} {rep.memberRank}
-                                  <span className="block text-[10px] text-slate-400 print:text-slate-400 font-normal">{rep.teamName}</span>
+                                  <span className="block text-[10px] text-slate-500 print:text-slate-600 font-normal">{rep.teamName}</span>
                                 </td>
-                                <td className="py-2 px-3 border border-slate-700 font-semibold text-amber-400 text-center bg-slate-900/20 print:text-amber-400 print:border-slate-700 print:bg-slate-900/20">
+                                <td className="py-2 px-3 border border-slate-300 font-semibold text-amber-700 text-center bg-amber-50/50 print:text-amber-800 print:border-slate-400 print:bg-amber-50">
                                   외근
                                 </td>
                                 {daysList.map(day => (
-                                  <td key={day} className="py-2 px-2 border border-slate-700 text-center text-[11px] break-words whitespace-normal leading-tight print:border-slate-700">
+                                  <td key={day} className="py-2 px-2 border border-slate-300 text-center text-[11px] break-words whitespace-normal leading-tight print:border-slate-400">
                                     {rep.weeklyOutings[day]?.active ? (
-                                      <span className="text-amber-300 print:text-amber-300 font-medium">
+                                      <span className="text-amber-800 print:text-amber-900 font-medium">
                                         {rep.weeklyOutings[day]?.note || '외근'}
                                       </span>
                                     ) : (
-                                      <span className="text-slate-600 print:text-slate-600">-</span>
+                                      <span className="text-slate-300 print:text-slate-400">-</span>
                                     )}
                                   </td>
                                 ))}
                               </tr>
                               {/* 휴가 일정 Row */}
-                              <tr className="hover:bg-slate-800/40 border-b border-slate-700 print:border-slate-700 print:hover:bg-transparent">
-                                <td className="py-2 px-3 border border-slate-700 font-semibold text-purple-400 text-center bg-slate-900/20 print:text-purple-400 print:border-slate-700 print:bg-slate-900/20">
+                              <tr className="hover:bg-slate-50 border-b border-slate-300 print:border-slate-400 print:hover:bg-transparent">
+                                <td className="py-2 px-3 border border-slate-300 font-semibold text-purple-700 text-center bg-purple-50/50 print:text-purple-800 print:border-slate-400 print:bg-purple-50">
                                   휴가
                                 </td>
                                 {daysList.map(day => (
-                                  <td key={day} className="py-2 px-2 border border-slate-700 text-center text-[11px] break-words whitespace-normal leading-tight print:border-slate-700">
+                                  <td key={day} className="py-2 px-2 border border-slate-300 text-center text-[11px] break-words whitespace-normal leading-tight print:border-slate-400">
                                     {rep.weeklyVacations[day]?.type !== '없음' ? (
-                                      <span className="bg-purple-950/60 text-purple-300 border border-purple-800/50 px-1.5 py-0.5 rounded font-medium print:bg-purple-950 print:text-purple-300 print:border-purple-800">
+                                      <span className="bg-purple-100 text-purple-800 border border-purple-200 px-1.5 py-0.5 rounded font-medium print:bg-purple-100 print:text-purple-900 print:border-purple-300">
                                         {rep.weeklyVacations[day]?.type}
                                       </span>
                                     ) : (
-                                      <span className="text-slate-600 print:text-slate-600">-</span>
+                                      <span className="text-slate-300 print:text-slate-400">-</span>
                                     )}
                                   </td>
                                 ))}
@@ -840,13 +840,13 @@ export default function App() {
         {activeTab === 'dashboard' && (
           <div className="space-y-6">
             {/* 상단 컨트롤 바 */}
-            <div className="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-6 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
               <div>
-                <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                  <Users className="w-6 h-6 text-blue-400" />
+                <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+                  <Users className="w-6 h-6 text-blue-600" />
                   팀 주간업무보고 취합 대시보드
                 </h2>
-                <p className="text-xs text-slate-400 mt-1">
+                <p className="text-xs text-slate-500 mt-1">
                   제출된 모든 주간보고서를 삭제하거나 자동 정리를 설정합니다.
                 </p>
               </div>
@@ -854,7 +854,7 @@ export default function App() {
               <div className="flex flex-wrap items-center gap-3">
                 <button
                   onClick={handlePrintPDF}
-                  className="bg-red-600 hover:bg-red-500 text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-lg transition flex items-center gap-2"
+                  className="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-md transition flex items-center gap-2"
                 >
                   <Printer className="w-4 h-4" />
                   <span>대쉬 보드 PDF 인쇄</span>
@@ -863,12 +863,12 @@ export default function App() {
             </div>
 
             {/* 자동 삭제 설정 패널 */}
-            <div className="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="bg-white border border-slate-200 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm">
               <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-amber-400" />
+                <Clock className="w-4 h-4 text-amber-600" />
                 <div>
-                  <h4 className="text-xs font-bold text-slate-200">대시보드 데이터 자동 삭제 설정</h4>
-                  <p className="text-[11px] text-slate-400">지정된 요일/시간 또는 경과 시간에 맞춰 데이터를 자동 정리합니다.</p>
+                  <h4 className="text-xs font-bold text-slate-800">대시보드 데이터 자동 삭제 설정</h4>
+                  <p className="text-[11px] text-slate-500">지정된 요일/시간 또는 경과 시간에 맞춰 데이터를 자동 정리합니다.</p>
                 </div>
               </div>
 
@@ -876,7 +876,7 @@ export default function App() {
                 <select 
                   value={autoDeleteMode} 
                   onChange={(e) => setAutoDeleteMode(e.target.value)}
-                  className="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none"
+                  className="bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 focus:outline-none"
                 >
                   <option value="none">자동 삭제 사용 안 함</option>
                   <option value="scheduled">지정 요일/시간 자동 삭제</option>
@@ -888,7 +888,7 @@ export default function App() {
                     <select 
                       value={autoDeleteDay} 
                       onChange={(e) => setAutoDeleteDay(e.target.value)}
-                      className="bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-200"
+                      className="bg-slate-50 border border-slate-300 rounded-lg px-2 py-1.5 text-xs text-slate-800"
                     >
                       {daysList.map(d => <option key={d} value={d}>{d}요일</option>)}
                     </select>
@@ -896,7 +896,7 @@ export default function App() {
                       type="time" 
                       value={autoDeleteTime}
                       onChange={(e) => setAutoDeleteTime(e.target.value)}
-                      className="bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-200"
+                      className="bg-slate-50 border border-slate-300 rounded-lg px-2 py-1.5 text-xs text-slate-800"
                     />
                   </div>
                 )}
@@ -905,7 +905,7 @@ export default function App() {
                   <select 
                     value={autoDeleteInterval} 
                     onChange={(e) => setAutoDeleteInterval(e.target.value)}
-                    className="bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-200"
+                    className="bg-slate-50 border border-slate-300 rounded-lg px-2 py-1.5 text-xs text-slate-800"
                   >
                     <option value="24h">24시간 후</option>
                     <option value="48h">48시간 후</option>
@@ -918,18 +918,18 @@ export default function App() {
             {/* 카드 목록 */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {teamReports.map((report) => (
-                <div key={report.id} className="bg-slate-800/90 border border-slate-700 rounded-2xl p-5 shadow-lg space-y-4 relative flex flex-col justify-between">
+                <div key={report.id} className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4 relative flex flex-col justify-between">
                   <div>
-                    <div className="flex items-center justify-between pb-3 border-b border-slate-700">
+                    <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                       <div className="flex items-center gap-2">
-                        <span className="bg-blue-600/20 text-blue-400 border border-blue-500/30 px-2.5 py-1 rounded-lg text-xs font-bold">
+                        <span className="bg-blue-50 text-blue-700 border border-blue-200 px-2.5 py-1 rounded-lg text-xs font-bold">
                           {report.teamName}
                         </span>
-                        <span className="font-bold text-white text-sm">{report.memberName} {report.memberRank}</span>
+                        <span className="font-bold text-slate-800 text-sm">{report.memberName} {report.memberRank}</span>
                       </div>
                       <button
                         onClick={() => setTeamReports(prev => prev.filter(r => r.id !== report.id))}
-                        className="text-slate-400 hover:text-red-400 transition p-1"
+                        className="text-slate-400 hover:text-red-500 transition p-1"
                         title="삭제"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -938,8 +938,8 @@ export default function App() {
 
                     <div className="space-y-3 pt-3 text-xs">
                       <div>
-                        <h4 className="font-bold text-slate-400 mb-1">지난주 주요 업무</h4>
-                        <ul className="list-disc list-inside text-slate-300 space-y-1">
+                        <h4 className="font-bold text-slate-500 mb-1">지난주 주요 업무</h4>
+                        <ul className="list-disc list-inside text-slate-700 space-y-1">
                           {report.lastWeekTasks.map((t, idx) => (
                             <li key={idx}>{t.content || '-'}</li>
                           ))}
@@ -947,8 +947,8 @@ export default function App() {
                       </div>
 
                       <div>
-                        <h4 className="font-bold text-slate-400 mb-1">이번주 예정 업무</h4>
-                        <ul className="list-disc list-inside text-slate-300 space-y-1">
+                        <h4 className="font-bold text-slate-500 mb-1">이번주 예정 업무</h4>
+                        <ul className="list-disc list-inside text-slate-700 space-y-1">
                           {report.thisWeekTasks.map((t, idx) => (
                             <li key={idx}>{t.content || '-'}</li>
                           ))}
@@ -957,28 +957,28 @@ export default function App() {
 
                       {report.otherNotes && (
                         <div>
-                          <h4 className="font-bold text-slate-400 mb-1">기타 보고사항</h4>
-                          <p className="text-slate-300 text-[11px] bg-slate-900/50 p-2 rounded-lg border border-slate-700/50">{report.otherNotes}</p>
+                          <h4 className="font-bold text-slate-500 mb-1">기타 보고사항</h4>
+                          <p className="text-slate-700 text-[11px] bg-slate-50 p-2 rounded-lg border border-slate-200">{report.otherNotes}</p>
                         </div>
                       )}
 
                       {getOutingsSummary(report.weeklyOutings) && (
                         <div>
-                          <h4 className="font-bold text-amber-400 mb-0.5">금주 외근 일정</h4>
-                          <p className="text-slate-300 text-[11px]">{getOutingsSummary(report.weeklyOutings)}</p>
+                          <h4 className="font-bold text-amber-700 mb-0.5">금주 외근 일정</h4>
+                          <p className="text-slate-700 text-[11px]">{getOutingsSummary(report.weeklyOutings)}</p>
                         </div>
                       )}
 
                       {getVacationsSummary(report.weeklyVacations) && (
                         <div>
-                          <h4 className="font-bold text-purple-400 mb-0.5">금주 휴가 일정</h4>
-                          <p className="text-slate-300 text-[11px]">{getVacationsSummary(report.weeklyVacations)}</p>
+                          <h4 className="font-bold text-purple-700 mb-0.5">금주 휴가 일정</h4>
+                          <p className="text-slate-700 text-[11px]">{getVacationsSummary(report.weeklyVacations)}</p>
                         </div>
                       )}
                     </div>
                   </div>
 
-                  <div className="pt-3 border-t border-slate-700/60 text-[10px] text-slate-500 flex justify-between items-center">
+                  <div className="pt-3 border-t border-slate-100 text-[10px] text-slate-400 flex justify-between items-center">
                     <span>등록일자: {report.reportDate}</span>
                   </div>
                 </div>
