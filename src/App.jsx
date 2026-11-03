@@ -760,8 +760,8 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* 월~일 외근 및 휴가 현황 통합표 (가로 출력에 최적화) */}
-                <div className="pt-2 border-t border-slate-200 print:border-slate-300 space-y-3">
+                {/* 월~일 외근 및 휴가 현황 통합표 (가로 출력 시 2번째 페이지 상단 출력) */}
+                <div className="pt-2 border-t border-slate-200 print:border-slate-300 space-y-3 print:break-before-page">
                   <h3 className="text-sm font-bold text-slate-800 print:text-slate-900 flex items-center gap-2">
                     <Briefcase className="w-4 h-4 text-amber-600 print:hidden" />
                     [ 금주 외근 및 휴가 현황 (통합) ]
