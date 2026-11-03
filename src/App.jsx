@@ -4,9 +4,28 @@ import {
   FileText, Briefcase, Plane, LayoutDashboard, Clock, Trash2,
   Eye, Building2, Printer
 } from 'lucide-react';
+import { initializeApp } from 'firebase/app';
+import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'firebase/auth';
+import { getFirestore, collection, doc, onSnapshot, setDoc, deleteDoc } from 'firebase/firestore';
+
+// Initialize Firebase
+const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+  apiKey: "demo-api-key",
+  authDomain: "demo-app.firebaseapp.com",
+  projectId: "demo-app",
+  storageBucket: "demo-app.appspot.com",
+  messagingSenderId: "123456789",
+  appId: "1:123456789:web:demo"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'insung-weekly-report';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('form'); // 'form' | 'dashboard' | 'view'
+  const [user, setUser] = useState(null);
   
   // Auto-delete settings: mode ('none' | 'interval' | 'scheduled')
   const [autoDeleteMode, setAutoDeleteMode] = useState('scheduled'); 
@@ -71,102 +90,65 @@ export default function App() {
     일: { type: '없음' }
   });
 
-  // Consolidated Team Reports Database (Persisted using localStorage)
+  // Real-time Public Consolidated Team Reports Database
   const [teamReports, setTeamReports] = useState(() => {
     try {
       const saved = localStorage.getItem('insung_team_reports');
-      if (saved) {
-        return JSON.parse(saved);
-      }
+      return saved ? JSON.parse(saved) : [];
     } catch (e) {
-      console.error('Failed to load reports from localStorage', e);
+      return [];
     }
-    return [
-      {
-        id: 'demo-1',
-        teamName: '설계팀',
-        memberName: '김철수',
-        memberRank: '부장',
-        reportDate: '2026-11-03',
-        createdAt: Date.now() - (1000 * 60 * 60 * 12),
-        lastWeekTasks: [
-          { content: 'A구역 모듈 배치 도면 최종 수정' },
-          { content: '안전성 검토 보고서 반영' }
-        ],
-        thisWeekTasks: [
-          { content: 'B구역 구조 계산서 상세 작업' },
-          { content: '도면 출도 및 1차 검토' }
-        ],
-        otherNotes: '3D 모델링 관련 SW 라이선스 연장 필요',
-        weeklyOutings: {
-          월: { active: false, note: '' },
-          화: { active: true, note: '용현BM 가열로 점검' },
-          수: { active: false, note: '' },
-          목: { active: false, note: '' },
-          금: { active: false, note: '' },
-          토: { active: false, note: '' },
-          일: { active: false, note: '' }
-        },
-        weeklyVacations: {
-          월: { type: '없음' },
-          화: { type: '없음' },
-          수: { type: '없음' },
-          목: { type: '연차' },
-          금: { type: '없음' },
-          토: { type: '없음' },
-          일: { type: '없음' }
-        }
-      },
-      {
-        id: 'demo-2',
-        teamName: '설계팀',
-        memberName: '이영희',
-        memberRank: '대리',
-        reportDate: '2026-11-03',
-        createdAt: Date.now() - (1000 * 60 * 60 * 6),
-        lastWeekTasks: [
-          { content: '부품 리스트 정원 검토 및 제안서 작성' },
-          { content: '원자재 단가 비교표 작성' }
-        ],
-        thisWeekTasks: [
-          { content: '고객사 요청 도면 수정본 전달' },
-          { content: '주간 안전 점검 참가' }
-        ],
-        otherNotes: '사무용품 수량 부족 건의',
-        weeklyOutings: {
-          월: { active: true, note: '한화글로벌 보은사업장 기술협의' },
-          화: { active: false, note: '' },
-          수: { active: false, note: '' },
-          목: { active: false, note: '' },
-          금: { active: false, note: '' },
-          토: { active: false, note: '' },
-          일: { active: false, note: '' }
-        },
-        weeklyVacations: {
-          월: { type: '없음' },
-          화: { type: '없음' },
-          수: { type: '대체 휴무' },
-          목: { type: '없음' },
-          금: { type: '없음' },
-          토: { type: '없음' },
-          일: { type: '없음' }
-        }
-      }
-    ];
   });
 
-  // Automatically sync teamReports state to browser localStorage
+  // Firebase Authentication setup
   useEffect(() => {
-    try {
-      localStorage.setItem('insung_team_reports', JSON.stringify(teamReports));
-    } catch (e) {
-      console.error('Failed to save reports to localStorage', e);
-    }
-  }, [teamReports]);
+    const initAuth = async () => {
+      try {
+        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+          await signInWithCustomToken(auth, __initial_auth_token);
+        } else {
+          await signInAnonymously(auth);
+        }
+      } catch (err) {
+        console.error("Auth initialization failed:", err);
+      }
+    };
+    initAuth();
+    const unsubscribe = onAuthStateChanged(auth, setUser);
+    return () => unsubscribe();
+  }, []);
+
+  // Real-time Firestore sync for sharing reports across all users
+  useEffect(() => {
+    if (!user) return;
+
+    const publicCollectionRef = collection(db, 'artifacts', appId, 'public', 'data', 'reports');
+
+    const unsubscribe = onSnapshot(
+      publicCollectionRef,
+      (snapshot) => {
+        const reportsList = [];
+        snapshot.forEach((docSnap) => {
+          reportsList.push({ id: docSnap.id, ...docSnap.data() });
+        });
+        // Sort descending by creation date
+        reportsList.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+        setTeamReports(reportsList);
+        try {
+          localStorage.setItem('insung_team_reports', JSON.stringify(reportsList));
+        } catch (e) {}
+      },
+      (error) => {
+        console.error("Firestore onSnapshot error:", error);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [user]);
 
   // Scheduled / Interval Auto-delete timer effect
   useEffect(() => {
-    if (autoDeleteMode === 'none') return;
+    if (autoDeleteMode === 'none' || !user) return;
 
     const dayMap = { '일': 0, '월': 1, '화': 2, '수': 3, '목': 4, '금': 5, '토': 6 };
 
@@ -182,7 +164,13 @@ export default function App() {
         const currentMinute = now.getMinutes();
 
         if (currentDayNum === targetDayNum && currentHour === targetHour && currentMinute === targetMinute) {
-          setTeamReports([]);
+          teamReports.forEach(async (r) => {
+            try {
+              await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'reports', r.id));
+            } catch (err) {
+              console.error("Auto delete error:", err);
+            }
+          });
         }
       } else if (autoDeleteMode === 'interval') {
         const getExpiryMs = (policy) => {
@@ -197,16 +185,21 @@ export default function App() {
         const expiryMs = getExpiryMs(autoDeleteInterval);
         const currentTimeMs = now.getTime();
 
-        setTeamReports(prev => {
-          const filtered = prev.filter(r => (currentTimeMs - (r.createdAt || currentTimeMs)) < expiryMs);
-          return filtered.length !== prev.length ? filtered : prev;
+        teamReports.forEach(async (r) => {
+          if (currentTimeMs - (r.createdAt || currentTimeMs) >= expiryMs) {
+            try {
+              await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'reports', r.id));
+            } catch (err) {
+              console.error("Auto interval delete error:", err);
+            }
+          }
         });
       }
     };
 
     const interval = setInterval(checkAutoDelete, 10000);
     return () => clearInterval(interval);
-  }, [autoDeleteMode, autoDeleteInterval, autoDeleteDay, autoDeleteTime]);
+  }, [autoDeleteMode, autoDeleteInterval, autoDeleteDay, autoDeleteTime, user, teamReports]);
 
   // Form Reset Function
   const resetForm = () => {
@@ -277,30 +270,64 @@ export default function App() {
     }));
   };
 
-  // Save report to team dashboard database and reset form
-  const handleSaveToDashboard = () => {
+  // Save report to public shared database
+  const handleSaveToDashboard = async () => {
     if (!memberName.trim()) {
       alert('담당자 성명을 입력해주세요.');
       return;
     }
+
+    const reportId = 'report-' + Date.now();
     const newReport = {
-      id: 'report-' + Date.now(),
       teamName,
       memberName,
       memberRank,
       reportDate,
       createdAt: Date.now(),
+      createdBy: user ? user.uid : 'anon',
       lastWeekTasks: [...lastWeekTasks],
       thisWeekTasks: [...thisWeekTasks],
       otherNotes,
       weeklyOutings: { ...weeklyOutings },
       weeklyVacations: { ...weeklyVacations }
     };
-    
-    setTeamReports(prev => [newReport, ...prev]);
-    alert(`${memberName} ${memberRank} 님의 주간업무보고서가 팀 취합 목록에 등록되었습니다.`);
-    resetForm();
-    setActiveTab('view');
+
+    try {
+      if (user) {
+        await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'reports', reportId), newReport);
+      } else {
+        const updated = [newReport, ...teamReports];
+        setTeamReports(updated);
+        localStorage.setItem('insung_team_reports', JSON.stringify(updated));
+      }
+      alert(`${memberName} ${memberRank} 님의 주간업무보고서가 팀 취합 목록에 등록되었습니다.`);
+      resetForm();
+      setActiveTab('view');
+    } catch (err) {
+      console.error("Error saving report:", err);
+      // Fallback to local storage if network fails
+      const updated = [newReport, ...teamReports];
+      setTeamReports(updated);
+      localStorage.setItem('insung_team_reports', JSON.stringify(updated));
+      alert(`${memberName} ${memberRank} 님의 주간업무보고서가 로컬에 등록되었습니다.`);
+      resetForm();
+      setActiveTab('view');
+    }
+  };
+
+  // Delete a report from public shared database
+  const handleDeleteReport = async (reportId) => {
+    try {
+      if (user) {
+        await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'reports', reportId));
+      } else {
+        const updated = teamReports.filter(r => r.id !== reportId);
+        setTeamReports(updated);
+        localStorage.setItem('insung_team_reports', JSON.stringify(updated));
+      }
+    } catch (err) {
+      console.error("Error deleting report:", err);
+    }
   };
 
   // Helper summaries
@@ -320,7 +347,7 @@ export default function App() {
       .join(', ');
   };
 
-  // Sort teams so "설계팀" always comes first, followed by others alphabetically or logically
+  // Sort teams so "설계팀" always comes first, followed by others alphabetically
   const getSortedTeams = (reports) => {
     const teams = Array.from(new Set(reports.map(r => r.teamName)));
     return teams.sort((a, b) => {
@@ -356,7 +383,6 @@ export default function App() {
             size: A4 landscape;
             margin: 10mm 10mm;
           }
-          /* Hide browser default header/footer (URL, date/time, document title) */
           head, title {
             display: none !important;
           }
@@ -376,7 +402,6 @@ export default function App() {
             page-break-before: always !important;
             break-before: page !important;
           }
-          /* Remove extraneous wrapper borders & outlines when printing */
           .print-clean-container {
             border: none !important;
             box-shadow: none !important;
@@ -975,7 +1000,7 @@ export default function App() {
                         <span className="font-bold text-slate-800 text-sm">{report.memberName} {report.memberRank}</span>
                       </div>
                       <button
-                        onClick={() => setTeamReports(prev => prev.filter(r => r.id !== report.id))}
+                        onClick={() => handleDeleteReport(report.id)}
                         className="text-slate-400 hover:text-red-500 transition p-1"
                         title="삭제"
                       >
