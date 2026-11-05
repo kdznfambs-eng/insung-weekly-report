@@ -4,9 +4,43 @@ import {
   FileText, Briefcase, Plane, LayoutDashboard, Clock, Trash2,
   Eye, Building2, Printer
 } from 'lucide-react';
+import { initializeApp } from 'firebase/app';
+import { 
+  getFirestore, 
+  collection, 
+  onSnapshot, 
+  doc, 
+  setDoc, 
+  deleteDoc, 
+  query 
+} from 'firebase/firestore';
+import { 
+  getAuth, 
+  signInAnonymously, 
+  signInWithCustomToken, 
+  onAuthStateChanged 
+} from 'firebase/auth';
+
+// Firebase Setup
+const firebaseConfig = typeof __firebase_config !== 'undefined' 
+  ? JSON.parse(__firebase_config)
+  : {
+      apiKey: "demo-api-key",
+      authDomain: "demo-app.firebaseapp.com",
+      projectId: "demo-app",
+      storageBucket: "demo-app.appspot.com",
+      messagingSenderId: "123456789",
+      appId: "1:123456789:web:demo"
+    };
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'insung-weekly-report-app';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('form'); // 'form' | 'dashboard' | 'view'
+  const [user, setUser] = useState(null);
   
   // Auto-delete settings: mode ('none' | 'interval' | 'scheduled')
   const [autoDeleteMode, setAutoDeleteMode] = useState('scheduled'); 
@@ -71,32 +105,58 @@ export default function App() {
     일: { type: '없음' }
   });
 
-  // Public Consolidated Team Reports Database
-  const [teamReports, setTeamReports] = useState(() => {
-    try {
-      const saved = localStorage.getItem('insung_team_reports');
-      return saved ? JSON.parse(saved) : [];
-    } catch (e) {
-      return [];
-    }
-  });
+  // Real-time Consolidated Reports State from Cloud Firestore
+  const [teamReports, setTeamReports] = useState([]);
 
-  // Sync teamReports to localStorage whenever updated
+  // Auth Initialization
   useEffect(() => {
-    try {
-      localStorage.setItem('insung_team_reports', JSON.stringify(teamReports));
-    } catch (e) {
-      console.error("localStorage save error:", e);
-    }
-  }, [teamReports]);
+    const initAuth = async () => {
+      try {
+        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+          await signInWithCustomToken(auth, __initial_auth_token);
+        } else {
+          await signInAnonymously(auth);
+        }
+      } catch (err) {
+        console.error("Auth error:", err);
+      }
+    };
+    initAuth();
+    const unsubscribe = onAuthStateChanged(auth, setUser);
+    return () => unsubscribe();
+  }, []);
+
+  // Real-time Firestore sync across all users/devices
+  useEffect(() => {
+    if (!user) return;
+
+    const publicColRef = collection(db, 'artifacts', appId, 'public', 'data', 'reports');
+    const q = query(publicColRef);
+
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const docsData = snapshot.docs.map(docSnap => ({
+          id: docSnap.id,
+          ...docSnap.data()
+        }));
+        setTeamReports(docsData);
+      },
+      (error) => {
+        console.error("Firestore sync error:", error);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [user]);
 
   // Scheduled / Interval Auto-delete timer effect
   useEffect(() => {
-    if (autoDeleteMode === 'none') return;
+    if (autoDeleteMode === 'none' || !user) return;
 
     const dayMap = { '일': 0, '월': 1, '화': 2, '수': 3, '목': 4, '금': 5, '토': 6 };
 
-    const checkAutoDelete = () => {
+    const checkAutoDelete = async () => {
       const now = new Date();
 
       if (autoDeleteMode === 'scheduled') {
@@ -108,7 +168,15 @@ export default function App() {
         const currentMinute = now.getMinutes();
 
         if (currentDayNum === targetDayNum && currentHour === targetHour && currentMinute === targetMinute) {
-          setTeamReports([]);
+          // Delete all reports in Firestore
+          teamReports.forEach(async (rep) => {
+            try {
+              const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'reports', rep.id);
+              await deleteDoc(docRef);
+            } catch (e) {
+              console.error("Auto delete doc error:", e);
+            }
+          });
         }
       } else if (autoDeleteMode === 'interval') {
         const getExpiryMs = (policy) => {
@@ -123,13 +191,22 @@ export default function App() {
         const expiryMs = getExpiryMs(autoDeleteInterval);
         const currentTimeMs = now.getTime();
 
-        setTeamReports(prev => prev.filter(r => currentTimeMs - (r.createdAt || currentTimeMs) < expiryMs));
+        teamReports.forEach(async (r) => {
+          if (currentTimeMs - (r.createdAt || currentTimeMs) >= expiryMs) {
+            try {
+              const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'reports', r.id);
+              await deleteDoc(docRef);
+            } catch (e) {
+              console.error("Interval delete doc error:", e);
+            }
+          }
+        });
       }
     };
 
     const interval = setInterval(checkAutoDelete, 10000);
     return () => clearInterval(interval);
-  }, [autoDeleteMode, autoDeleteInterval, autoDeleteDay, autoDeleteTime]);
+  }, [autoDeleteMode, autoDeleteInterval, autoDeleteDay, autoDeleteTime, teamReports, user]);
 
   // Form Reset Function
   const resetForm = () => {
@@ -200,15 +277,15 @@ export default function App() {
     }));
   };
 
-  // Save report to dashboard
-  const handleSaveToDashboard = () => {
+  // Save report to Cloud Firestore for sharing across all devices
+  const handleSaveToDashboard = async () => {
     if (!memberName.trim()) {
       alert('담당자 성명을 입력해주세요.');
       return;
     }
 
+    const reportId = 'report-' + Date.now();
     const newReport = {
-      id: 'report-' + Date.now(),
       teamName,
       memberName,
       memberRank,
@@ -221,15 +298,30 @@ export default function App() {
       weeklyVacations: { ...weeklyVacations }
     };
 
-    setTeamReports(prev => [newReport, ...prev]);
-    alert(`${memberName} ${memberRank} 님의 주간업무보고서가 팀 취합 목록에 등록되었습니다.`);
-    resetForm();
-    setActiveTab('view');
+    try {
+      if (user) {
+        const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'reports', reportId);
+        await setDoc(docRef, newReport);
+      }
+      alert(`${memberName} ${memberRank} 님의 주간업무보고서가 팀 취합 목록에 등록되어 실시간으로 공유되었습니다.`);
+      resetForm();
+      setActiveTab('view');
+    } catch (err) {
+      console.error("Save report error:", err);
+      alert('저장 중 오류가 발생했습니다.');
+    }
   };
 
-  // Delete a report
-  const handleDeleteReport = (reportId) => {
-    setTeamReports(prev => prev.filter(r => r.id !== reportId));
+  // Delete a report from Cloud Firestore
+  const handleDeleteReport = async (reportId) => {
+    try {
+      if (user) {
+        const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'reports', reportId);
+        await deleteDoc(docRef);
+      }
+    } catch (err) {
+      console.error("Delete report error:", err);
+    }
   };
 
   // Helper summaries
