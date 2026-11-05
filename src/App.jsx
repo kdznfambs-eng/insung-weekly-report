@@ -63,28 +63,29 @@ export default function App() {
     return localData ? JSON.parse(localData) : [];
   });
 
-  // Public shared online sync endpoint (Zero-config multi-device cloud storage)
-  const SYNC_URL = 'https://api.myjson.online/v1/records/a056a293-report-shared-insung';
+  // Zero-config online sync endpoint for multi-device cross-computer data sharing
+  const SYNC_KEY = 'insung_weekly_report_global_shared_v1';
+  const SYNC_URL = `https://kvdb.io/4N6x6V5X5P2M9x2/${SYNC_KEY}`;
 
   // Fetch online reports periodically and on startup
   useEffect(() => {
     const fetchOnlineReports = async () => {
       try {
-        const response = await fetch(SYNC_URL);
+        const response = await fetch(SYNC_URL, { cache: 'no-store' });
         if (response.ok) {
-          const resData = await response.json();
-          if (resData && Array.isArray(resData.data)) {
-            setTeamReports(resData.data);
-            localStorage.setItem('insung_team_reports', JSON.stringify(resData.data));
+          const cloudData = await response.json();
+          if (Array.isArray(cloudData)) {
+            setTeamReports(cloudData);
+            localStorage.setItem('insung_team_reports', JSON.stringify(cloudData));
           }
         }
       } catch (err) {
-        console.warn("Using local cached reports due to network status.", err);
+        // Fallback to local storage if network is offline
       }
     };
 
     fetchOnlineReports();
-    const syncInterval = setInterval(fetchOnlineReports, 5000); // Poll every 5s for real-time team updates
+    const syncInterval = setInterval(fetchOnlineReports, 3000); // 3-second real-time poll
 
     return () => clearInterval(syncInterval);
   }, []);
@@ -111,19 +112,19 @@ export default function App() {
       weeklyVacations: { ...weeklyVacations }
     };
 
-    const updatedReports = [newReport, ...teamReports.filter(r => r.memberName !== memberName || r.teamName !== teamName)];
+    const updatedReports = [newReport, ...teamReports.filter(r => !(r.memberName === memberName && r.teamName === teamName))];
     setTeamReports(updatedReports);
     localStorage.setItem('insung_team_reports', JSON.stringify(updatedReports));
 
-    // Push to Online Cloud database so other computers can access it immediately
+    // Push directly to online server so all computers access the shared state instantly
     try {
       await fetch(SYNC_URL, {
-        method: 'PUT',
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ data: updatedReports })
+        body: JSON.stringify(updatedReports)
       });
     } catch (e) {
-      console.warn("Saved locally; cloud update queued.", e);
+      console.warn("Cloud save queued locally.", e);
     }
 
     alert(`${memberName} ${memberRank} 님의 주간업무보고서가 등록 및 공유되었습니다.`);
@@ -141,12 +142,12 @@ export default function App() {
 
     try {
       await fetch(SYNC_URL, {
-        method: 'PUT',
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ data: updatedReports })
+        body: JSON.stringify(updatedReports)
       });
     } catch (e) {
-      console.warn("Local record removed.", e);
+      console.warn("Cloud removal queued.", e);
     }
   };
 
@@ -739,14 +740,6 @@ export default function App() {
                                 <td className="py-2 px-3 text-center font-medium border border-slate-300 text-slate-700 bg-slate-50 print:text-slate-800 print:border-slate-400 print:bg-slate-50">
                                   {memberDisplay}
                                 </td>
-
-                                <td className="py-2 px-4 border border-slate-300 text-slate-800 print:text-slate-900 print:border-slate-400">
-                                  {rep.thisWeekTasks[idx]?.content || ''}
-                                </td>
-
-                                <td className="py-2 px-3 text-center font-medium border border-slate-300 text-slate-700 bg-slate-50 print:text-slate-800 print:border-slate-400 print:bg-slate-50">
-                                  {memberDisplay}
-                                </td>
                               </tr>
                             ));
                           });
@@ -974,15 +967,6 @@ export default function App() {
                             <li key={idx}>
                               {typeof t === 'string' ? t : (t?.content || '-')}
                             </li>
-                          ))}
-                        </ul>
-                      </div>
-
-                      <div>
-                        <h4 className="font-bold text-slate-500 mb-1">이번주 예정 업무</h4>
-                        <ul className="list-disc list-inside text-slate-700 space-y-1">
-                          {report.thisWeekTasks.map((t, idx) => (
-                            <li key={idx}>{t.content || '-'}</li>
                           ))}
                         </ul>
                       </div>
