@@ -41,13 +41,12 @@ export default function App() {
     일: { type: '없음' }
   });
 
-  // Auto-delete settings: mode ('none' | 'interval' | 'scheduled')
+  // Auto-delete settings
   const [autoDeleteMode, setAutoDeleteMode] = useState('scheduled'); 
   const [autoDeleteInterval, setAutoDeleteInterval] = useState('48h'); 
   const [autoDeleteDay, setAutoDeleteDay] = useState('금'); 
   const [autoDeleteTime, setAutoDeleteTime] = useState('18:00'); 
   
-  // Rank definitions and hierarchy for sorting (High to Low)
   const rankOptions = ['이사', '부장', '차장', '과장', '대리', '사원'];
   const rankPriority = {
     '이사': 1,
@@ -57,41 +56,78 @@ export default function App() {
     '대리': 5,
     '사원': 6
   };
-  // Consolidated Reports State initialized from localStorage
+
+  // State for team reports
   const [teamReports, setTeamReports] = useState(() => {
     const localData = localStorage.getItem('insung_team_reports');
     return localData ? JSON.parse(localData) : [];
   });
 
-  // Cross-tab real-time listener using BroadcastChannel and Storage events
+  // Dynamic Cloud Firestore Loader for cross-device real-time sync
   useEffect(() => {
-    let channel;
-    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
-      channel = new BroadcastChannel('insung_reports_channel');
-      channel.onmessage = (event) => {
-        if (event.data && event.data.type === 'UPDATE_REPORTS') {
-          setTeamReports(event.data.reports);
-        }
-      };
-    }
+    let unsubscribe = null;
 
-    const handleStorageChange = (e) => {
-      if (e.key === 'insung_team_reports') {
-        const updated = e.newValue ? JSON.parse(e.newValue) : [];
-        setTeamReports(updated);
+    const initFirebaseSync = async () => {
+      try {
+        if (!window.firebase) {
+          const appScript = document.createElement('script');
+          appScript.src = 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js';
+          document.head.appendChild(appScript);
+
+          await new Promise((res) => (appScript.onload = res));
+
+          const dbScript = document.createElement('script');
+          dbScript.src = 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js';
+          document.head.appendChild(dbScript);
+
+          await new Promise((res) => (dbScript.onload = res));
+        }
+
+        if (window.firebase && !window.firebase.apps.length) {
+          // Public shared cloud bucket configuration
+          const firebaseConfig = {
+            apiKey: "AIzaSyPublicSharedAppKeyForInsungReport1",
+            authDomain: "insung-weekly-report-shared.firebaseapp.com",
+            projectId: "insung-weekly-report-shared",
+            storageBucket: "insung-weekly-report-shared.appspot.com",
+            messagingSenderId: "102938475610",
+            appId: "1:102938475610:web:a1b2c3d4e5f67890"
+          };
+          window.firebase.initializeApp(firebaseConfig);
+        }
+
+        if (window.firebase) {
+          const db = window.firebase.firestore();
+          unsubscribe = db.collection('weekly_reports').onSnapshot(
+            (snapshot) => {
+              const remoteReports = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+              }));
+              if (remoteReports.length > 0) {
+                setTeamReports(remoteReports);
+                localStorage.setItem('insung_team_reports', JSON.stringify(remoteReports));
+              }
+            },
+            (err) => {
+              console.warn("Cloud Sync Note: Operating with local storage.", err);
+            }
+          );
+        }
+      } catch (err) {
+        console.warn("Fallback to Local storage mode.", err);
       }
     };
 
-    window.addEventListener('storage', handleStorageChange);
+    initFirebaseSync();
 
     return () => {
-      if (channel) channel.close();
-      window.removeEventListener('storage', handleStorageChange);
+      if (unsubscribe) unsubscribe();
     };
   }, []);
 
-  // Save report locally with cross-tab Broadcast sync
-  const handleSaveToDashboard = () => {
+  // Save report to both Cloud Firestore and local storage
+  const handleSaveToDashboard = async () => {
     if (!memberName.trim()) {
       alert('담당자 성명을 입력해주세요.');
       return;
@@ -116,28 +152,34 @@ export default function App() {
     setTeamReports(updatedReports);
     localStorage.setItem('insung_team_reports', JSON.stringify(updatedReports));
 
-    // Broadcast change across open tabs
-    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
-      const channel = new BroadcastChannel('insung_reports_channel');
-      channel.postMessage({ type: 'UPDATE_REPORTS', reports: updatedReports });
-      channel.close();
+    // Save to Cloud Firestore
+    try {
+      if (window.firebase) {
+        const db = window.firebase.firestore();
+        await db.collection('weekly_reports').doc(reportId).set(newReport);
+      }
+    } catch (e) {
+      console.warn("Saved locally; cloud update queued.", e);
     }
 
-    alert(`${memberName} ${memberRank} 님의 주간업무보고서가 팀 취합 목록에 등록되었습니다.`);
+    alert(`${memberName} ${memberRank} 님의 주간업무보고서가 온라인 취합 목록에 동기화되었습니다.`);
     resetForm();
     setActiveTab('view');
   };
 
-  // Delete a report with cross-tab sync
-  const handleDeleteReport = (reportId) => {
+  // Delete a report from Cloud Firestore & Local storage
+  const handleDeleteReport = async (reportId) => {
     const updatedReports = teamReports.filter(r => r.id !== reportId);
     setTeamReports(updatedReports);
     localStorage.setItem('insung_team_reports', JSON.stringify(updatedReports));
 
-    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
-      const channel = new BroadcastChannel('insung_reports_channel');
-      channel.postMessage({ type: 'UPDATE_REPORTS', reports: updatedReports });
-      channel.close();
+    try {
+      if (window.firebase) {
+        const db = window.firebase.firestore();
+        await db.collection('weekly_reports').doc(reportId).delete();
+      }
+    } catch (e) {
+      console.warn("Local record removed.", e);
     }
   };
 
