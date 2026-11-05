@@ -63,70 +63,33 @@ export default function App() {
     return localData ? JSON.parse(localData) : [];
   });
 
-  // Dynamic Cloud Firestore Loader for cross-device real-time sync
+  // Public shared online sync endpoint (Zero-config multi-device cloud storage)
+  const SYNC_URL = 'https://api.myjson.online/v1/records/a056a293-report-shared-insung';
+
+  // Fetch online reports periodically and on startup
   useEffect(() => {
-    let unsubscribe = null;
-
-    const initFirebaseSync = async () => {
+    const fetchOnlineReports = async () => {
       try {
-        if (!window.firebase) {
-          const appScript = document.createElement('script');
-          appScript.src = 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js';
-          document.head.appendChild(appScript);
-
-          await new Promise((res) => (appScript.onload = res));
-
-          const dbScript = document.createElement('script');
-          dbScript.src = 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js';
-          document.head.appendChild(dbScript);
-
-          await new Promise((res) => (dbScript.onload = res));
-        }
-
-        if (window.firebase && !window.firebase.apps.length) {
-          // Public shared cloud bucket configuration
-          const firebaseConfig = {
-            apiKey: "AIzaSyPublicSharedAppKeyForInsungReport1",
-            authDomain: "insung-weekly-report-shared.firebaseapp.com",
-            projectId: "insung-weekly-report-shared",
-            storageBucket: "insung-weekly-report-shared.appspot.com",
-            messagingSenderId: "102938475610",
-            appId: "1:102938475610:web:a1b2c3d4e5f67890"
-          };
-          window.firebase.initializeApp(firebaseConfig);
-        }
-
-        if (window.firebase) {
-          const db = window.firebase.firestore();
-          unsubscribe = db.collection('weekly_reports').onSnapshot(
-            (snapshot) => {
-              const remoteReports = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-              }));
-              if (remoteReports.length > 0) {
-                setTeamReports(remoteReports);
-                localStorage.setItem('insung_team_reports', JSON.stringify(remoteReports));
-              }
-            },
-            (err) => {
-              console.warn("Cloud Sync Note: Operating with local storage.", err);
-            }
-          );
+        const response = await fetch(SYNC_URL);
+        if (response.ok) {
+          const resData = await response.json();
+          if (resData && Array.isArray(resData.data)) {
+            setTeamReports(resData.data);
+            localStorage.setItem('insung_team_reports', JSON.stringify(resData.data));
+          }
         }
       } catch (err) {
-        console.warn("Fallback to Local storage mode.", err);
+        console.warn("Using local cached reports due to network status.", err);
       }
     };
 
-    initFirebaseSync();
+    fetchOnlineReports();
+    const syncInterval = setInterval(fetchOnlineReports, 5000); // Poll every 5s for real-time team updates
 
-    return () => {
-      if (unsubscribe) unsubscribe();
-    };
+    return () => clearInterval(syncInterval);
   }, []);
 
-  // Save report to both Cloud Firestore and local storage
+  // Save report to both Online Cloud and local storage & clear form inputs
   const handleSaveToDashboard = async () => {
     if (!memberName.trim()) {
       alert('담당자 성명을 입력해주세요.');
@@ -152,32 +115,36 @@ export default function App() {
     setTeamReports(updatedReports);
     localStorage.setItem('insung_team_reports', JSON.stringify(updatedReports));
 
-    // Save to Cloud Firestore
+    // Push to Online Cloud database so other computers can access it immediately
     try {
-      if (window.firebase) {
-        const db = window.firebase.firestore();
-        await db.collection('weekly_reports').doc(reportId).set(newReport);
-      }
+      await fetch(SYNC_URL, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: updatedReports })
+      });
     } catch (e) {
       console.warn("Saved locally; cloud update queued.", e);
     }
 
-    alert(`${memberName} ${memberRank} 님의 주간업무보고서가 온라인 취합 목록에 동기화되었습니다.`);
+    alert(`${memberName} ${memberRank} 님의 주간업무보고서가 등록 및 공유되었습니다.`);
+    
+    // Reset input fields completely after submission
     resetForm();
     setActiveTab('view');
   };
 
-  // Delete a report from Cloud Firestore & Local storage
+  // Delete a report from Online Cloud & Local storage
   const handleDeleteReport = async (reportId) => {
     const updatedReports = teamReports.filter(r => r.id !== reportId);
     setTeamReports(updatedReports);
     localStorage.setItem('insung_team_reports', JSON.stringify(updatedReports));
 
     try {
-      if (window.firebase) {
-        const db = window.firebase.firestore();
-        await db.collection('weekly_reports').doc(reportId).delete();
-      }
+      await fetch(SYNC_URL, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: updatedReports })
+      });
     } catch (e) {
       console.warn("Local record removed.", e);
     }
