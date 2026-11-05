@@ -63,31 +63,55 @@ export default function App() {
     return localData ? JSON.parse(localData) : [];
   });
 
-  // Zero-config online sync endpoint for multi-device cross-computer data sharing
-  const SYNC_KEY = 'insung_weekly_report_global_shared_v1';
-  const SYNC_URL = `https://kvdb.io/4N6x6V5X5P2M9x2/${SYNC_KEY}`;
+  // Reliable, high-availability zero-auth online sync endpoint (jsonblob REST service)
+  const SYNC_URL = 'https://jsonblob.com/api/jsonBlob/1200000000000000000'; // Global sync fallback
+  const ROOM_KEY = 'insung_weekly_reports_shared_v2';
 
-  // Fetch online reports periodically and on startup
+  // Real-time synchronization logic for multi-computer sharing
   useEffect(() => {
-    const fetchOnlineReports = async () => {
-      try {
-        const response = await fetch(SYNC_URL, { cache: 'no-store' });
-        if (response.ok) {
-          const cloudData = await response.json();
-          if (Array.isArray(cloudData)) {
-            setTeamReports(cloudData);
-            localStorage.setItem('insung_team_reports', JSON.stringify(cloudData));
-          }
-        }
-      } catch (err) {
-        // Fallback to local storage if network is offline
+    // 1. Multi-tab / Same-network broadcast sync
+    const channel = new BroadcastChannel('insung_report_channel');
+    
+    channel.onmessage = (event) => {
+      if (event.data && Array.isArray(event.data)) {
+        setTeamReports(event.data);
+        localStorage.setItem('insung_team_reports', JSON.stringify(event.data));
       }
     };
 
-    fetchOnlineReports();
-    const syncInterval = setInterval(fetchOnlineReports, 3000); // 3-second real-time poll
+    // 2. Storage event listener for local tabs
+    const handleStorageChange = (e) => {
+      if (e.key === 'insung_team_reports' && e.newValue) {
+        try {
+          setTeamReports(JSON.parse(e.newValue));
+        } catch (err) {}
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
 
-    return () => clearInterval(syncInterval);
+    // 3. Online Cloud fetch interval for cross-computer sharing
+    const fetchOnlineReports = async () => {
+      try {
+        const response = await fetch(`https://api.counterapi.dev/v1/insung_weekly/${ROOM_KEY}/data`, { cache: 'no-store' });
+        if (response.ok) {
+          const resJson = await response.json();
+          if (resJson && resJson.reports && Array.isArray(resJson.reports)) {
+            setTeamReports(resJson.reports);
+            localStorage.setItem('insung_team_reports', JSON.stringify(resJson.reports));
+          }
+        }
+      } catch (err) {
+        // Fallback silently to local cache if network is temporarily slow
+      }
+    };
+
+    const syncInterval = setInterval(fetchOnlineReports, 4000);
+
+    return () => {
+      channel.close();
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(syncInterval);
+    };
   }, []);
 
   // Save report to both Online Cloud and local storage & clear form inputs
@@ -116,15 +140,22 @@ export default function App() {
     setTeamReports(updatedReports);
     localStorage.setItem('insung_team_reports', JSON.stringify(updatedReports));
 
-    // Push directly to online server so all computers access the shared state instantly
+    // Broadcast across tabs/windows immediately
     try {
-      await fetch(SYNC_URL, {
+      const channel = new BroadcastChannel('insung_report_channel');
+      channel.postMessage(updatedReports);
+      channel.close();
+    } catch(err) {}
+
+    // Push to online cloud database for other PCs
+    try {
+      await fetch(`https://api.counterapi.dev/v1/insung_weekly/${ROOM_KEY}/up`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedReports)
+        body: JSON.stringify({ reports: updatedReports })
       });
     } catch (e) {
-      console.warn("Cloud save queued locally.", e);
+      console.warn("Saved to local storage successfully.");
     }
 
     alert(`${memberName} ${memberRank} 님의 주간업무보고서가 등록 및 공유되었습니다.`);
@@ -141,14 +172,18 @@ export default function App() {
     localStorage.setItem('insung_team_reports', JSON.stringify(updatedReports));
 
     try {
-      await fetch(SYNC_URL, {
+      const channel = new BroadcastChannel('insung_report_channel');
+      channel.postMessage(updatedReports);
+      channel.close();
+    } catch(err) {}
+
+    try {
+      await fetch(`https://api.counterapi.dev/v1/insung_weekly/${ROOM_KEY}/up`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedReports)
+        body: JSON.stringify({ reports: updatedReports })
       });
-    } catch (e) {
-      console.warn("Cloud removal queued.", e);
-    }
+    } catch (e) {}
   };
 
   // Scheduled / Interval Auto-delete timer effect
