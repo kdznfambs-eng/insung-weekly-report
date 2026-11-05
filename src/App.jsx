@@ -4,44 +4,43 @@ import {
   FileText, Briefcase, Plane, LayoutDashboard, Clock, Trash2,
   Eye, Building2, Printer
 } from 'lucide-react';
-import { initializeApp } from 'firebase/app';
-import { 
-  getFirestore, 
-  collection, 
-  onSnapshot, 
-  doc, 
-  setDoc, 
-  deleteDoc, 
-  query 
-} from 'firebase/firestore';
-import { 
-  getAuth, 
-  signInAnonymously, 
-  signInWithCustomToken, 
-  onAuthStateChanged 
-} from 'firebase/auth';
-
-// Firebase Setup
-const firebaseConfig = typeof __firebase_config !== 'undefined' 
-  ? JSON.parse(__firebase_config)
-  : {
-      apiKey: "demo-api-key",
-      authDomain: "demo-app.firebaseapp.com",
-      projectId: "demo-app",
-      storageBucket: "demo-app.appspot.com",
-      messagingSenderId: "123456789",
-      appId: "1:123456789:web:demo"
-    };
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-const appId = typeof __app_id !== 'undefined' ? __app_id : 'insung-weekly-report-app';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('form'); // 'form' | 'dashboard' | 'view'
-  const [user, setUser] = useState(null);
   
+  // Form State Declarations
+  const [teamName, setTeamName] = useState('설계팀');
+  const [memberName, setMemberName] = useState('');
+  const [memberRank, setMemberRank] = useState('사원');
+  const [reportDate, setReportDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [lastWeekTasks, setLastWeekTasks] = useState([
+    { id: 1, content: '' },
+    { id: 2, content: '' }
+  ]);
+  const [thisWeekTasks, setThisWeekTasks] = useState([
+    { id: 1, content: '' },
+    { id: 2, content: '' }
+  ]);
+  const [otherNotes, setOtherNotes] = useState('');
+  const [weeklyOutings, setWeeklyOutings] = useState({
+    월: { active: false, note: '' },
+    화: { active: false, note: '' },
+    수: { active: false, note: '' },
+    목: { active: false, note: '' },
+    금: { active: false, note: '' },
+    토: { active: false, note: '' },
+    일: { active: false, note: '' }
+  });
+  const [weeklyVacations, setWeeklyVacations] = useState({
+    월: { type: '없음' },
+    화: { type: '없음' },
+    수: { type: '없음' },
+    목: { type: '없음' },
+    금: { type: '없음' },
+    토: { type: '없음' },
+    일: { type: '없음' }
+  });
+
   // Auto-delete settings: mode ('none' | 'interval' | 'scheduled')
   const [autoDeleteMode, setAutoDeleteMode] = useState('scheduled'); 
   const [autoDeleteInterval, setAutoDeleteInterval] = useState('48h'); 
@@ -58,105 +57,97 @@ export default function App() {
     '대리': 5,
     '사원': 6
   };
-
-  // Single Report Form State
-  const [teamName, setTeamName] = useState('설계팀');
-  const [memberName, setMemberName] = useState('');
-  const [memberRank, setMemberRank] = useState('사원');
-  const [reportDate, setReportDate] = useState(() => {
-    const today = new Date();
-    return today.toISOString().split('T')[0];
+  // Consolidated Reports State initialized from localStorage
+  const [teamReports, setTeamReports] = useState(() => {
+    const localData = localStorage.getItem('insung_team_reports');
+    return localData ? JSON.parse(localData) : [];
   });
 
-  // Fixed 2 items for Last Week Tasks
-  const [lastWeekTasks, setLastWeekTasks] = useState([
-    { id: 1, content: '' },
-    { id: 2, content: '' }
-  ]);
-
-  // Fixed 2 items for This Week Tasks
-  const [thisWeekTasks, setThisWeekTasks] = useState([
-    { id: 1, content: '' },
-    { id: 2, content: '' }
-  ]);
-
-  // 기타 보고사항 State
-  const [otherNotes, setOtherNotes] = useState('');
-
-  // Outing (외근) Weekly Days State (월~일)
-  const [weeklyOutings, setWeeklyOutings] = useState({
-    월: { active: false, note: '' },
-    화: { active: false, note: '' },
-    수: { active: false, note: '' },
-    목: { active: false, note: '' },
-    금: { active: false, note: '' },
-    토: { active: false, note: '' },
-    일: { active: false, note: '' }
-  });
-
-  // Vacation (휴가) Weekly Days State (월~일 요일별 휴가/반차 선택 방식)
-  const [weeklyVacations, setWeeklyVacations] = useState({
-    월: { type: '없음' },
-    화: { type: '없음' },
-    수: { type: '없음' },
-    목: { type: '없음' },
-    금: { type: '없음' },
-    토: { type: '없음' },
-    일: { type: '없음' }
-  });
-
-  // Real-time Consolidated Reports State from Cloud Firestore
-  const [teamReports, setTeamReports] = useState([]);
-
-  // Auth Initialization
+  // Cross-tab real-time listener using BroadcastChannel and Storage events
   useEffect(() => {
-    const initAuth = async () => {
-      try {
-        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-          await signInWithCustomToken(auth, __initial_auth_token);
-        } else {
-          await signInAnonymously(auth);
+    let channel;
+    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+      channel = new BroadcastChannel('insung_reports_channel');
+      channel.onmessage = (event) => {
+        if (event.data && event.data.type === 'UPDATE_REPORTS') {
+          setTeamReports(event.data.reports);
         }
-      } catch (err) {
-        console.error("Auth error:", err);
+      };
+    }
+
+    const handleStorageChange = (e) => {
+      if (e.key === 'insung_team_reports') {
+        const updated = e.newValue ? JSON.parse(e.newValue) : [];
+        setTeamReports(updated);
       }
     };
-    initAuth();
-    const unsubscribe = onAuthStateChanged(auth, setUser);
-    return () => unsubscribe();
+
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      if (channel) channel.close();
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, []);
 
-  // Real-time Firestore sync across all users/devices
-  useEffect(() => {
-    if (!user) return;
+  // Save report locally with cross-tab Broadcast sync
+  const handleSaveToDashboard = () => {
+    if (!memberName.trim()) {
+      alert('담당자 성명을 입력해주세요.');
+      return;
+    }
 
-    const publicColRef = collection(db, 'artifacts', appId, 'public', 'data', 'reports');
-    const q = query(publicColRef);
+    const reportId = 'report-' + Date.now();
+    const newReport = {
+      id: reportId,
+      teamName,
+      memberName,
+      memberRank,
+      reportDate,
+      createdAt: Date.now(),
+      lastWeekTasks: [...lastWeekTasks],
+      thisWeekTasks: [...thisWeekTasks],
+      otherNotes,
+      weeklyOutings: { ...weeklyOutings },
+      weeklyVacations: { ...weeklyVacations }
+    };
 
-    const unsubscribe = onSnapshot(
-      q,
-      (snapshot) => {
-        const docsData = snapshot.docs.map(docSnap => ({
-          id: docSnap.id,
-          ...docSnap.data()
-        }));
-        setTeamReports(docsData);
-      },
-      (error) => {
-        console.error("Firestore sync error:", error);
-      }
-    );
+    const updatedReports = [newReport, ...teamReports.filter(r => r.memberName !== memberName || r.teamName !== teamName)];
+    setTeamReports(updatedReports);
+    localStorage.setItem('insung_team_reports', JSON.stringify(updatedReports));
 
-    return () => unsubscribe();
-  }, [user]);
+    // Broadcast change across open tabs
+    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+      const channel = new BroadcastChannel('insung_reports_channel');
+      channel.postMessage({ type: 'UPDATE_REPORTS', reports: updatedReports });
+      channel.close();
+    }
+
+    alert(`${memberName} ${memberRank} 님의 주간업무보고서가 팀 취합 목록에 등록되었습니다.`);
+    resetForm();
+    setActiveTab('view');
+  };
+
+  // Delete a report with cross-tab sync
+  const handleDeleteReport = (reportId) => {
+    const updatedReports = teamReports.filter(r => r.id !== reportId);
+    setTeamReports(updatedReports);
+    localStorage.setItem('insung_team_reports', JSON.stringify(updatedReports));
+
+    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+      const channel = new BroadcastChannel('insung_reports_channel');
+      channel.postMessage({ type: 'UPDATE_REPORTS', reports: updatedReports });
+      channel.close();
+    }
+  };
 
   // Scheduled / Interval Auto-delete timer effect
   useEffect(() => {
-    if (autoDeleteMode === 'none' || !user) return;
+    if (autoDeleteMode === 'none') return;
 
     const dayMap = { '일': 0, '월': 1, '화': 2, '수': 3, '목': 4, '금': 5, '토': 6 };
 
-    const checkAutoDelete = async () => {
+    const checkAutoDelete = () => {
       const now = new Date();
 
       if (autoDeleteMode === 'scheduled') {
@@ -168,15 +159,8 @@ export default function App() {
         const currentMinute = now.getMinutes();
 
         if (currentDayNum === targetDayNum && currentHour === targetHour && currentMinute === targetMinute) {
-          // Delete all reports in Firestore
-          teamReports.forEach(async (rep) => {
-            try {
-              const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'reports', rep.id);
-              await deleteDoc(docRef);
-            } catch (e) {
-              console.error("Auto delete doc error:", e);
-            }
-          });
+          setTeamReports([]);
+          localStorage.removeItem('insung_team_reports');
         }
       } else if (autoDeleteMode === 'interval') {
         const getExpiryMs = (policy) => {
@@ -190,23 +174,18 @@ export default function App() {
 
         const expiryMs = getExpiryMs(autoDeleteInterval);
         const currentTimeMs = now.getTime();
+        const filtered = teamReports.filter(r => currentTimeMs - (r.createdAt || currentTimeMs) < expiryMs);
 
-        teamReports.forEach(async (r) => {
-          if (currentTimeMs - (r.createdAt || currentTimeMs) >= expiryMs) {
-            try {
-              const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'reports', r.id);
-              await deleteDoc(docRef);
-            } catch (e) {
-              console.error("Interval delete doc error:", e);
-            }
-          }
-        });
+        if (filtered.length !== teamReports.length) {
+          setTeamReports(filtered);
+          localStorage.setItem('insung_team_reports', JSON.stringify(filtered));
+        }
       }
     };
 
     const interval = setInterval(checkAutoDelete, 10000);
     return () => clearInterval(interval);
-  }, [autoDeleteMode, autoDeleteInterval, autoDeleteDay, autoDeleteTime, teamReports, user]);
+  }, [autoDeleteMode, autoDeleteInterval, autoDeleteDay, autoDeleteTime, teamReports]);
 
   // Form Reset Function
   const resetForm = () => {
@@ -275,53 +254,6 @@ export default function App() {
       ...prev,
       [day]: { ...prev[day], type }
     }));
-  };
-
-  // Save report to Cloud Firestore for sharing across all devices
-  const handleSaveToDashboard = async () => {
-    if (!memberName.trim()) {
-      alert('담당자 성명을 입력해주세요.');
-      return;
-    }
-
-    const reportId = 'report-' + Date.now();
-    const newReport = {
-      teamName,
-      memberName,
-      memberRank,
-      reportDate,
-      createdAt: Date.now(),
-      lastWeekTasks: [...lastWeekTasks],
-      thisWeekTasks: [...thisWeekTasks],
-      otherNotes,
-      weeklyOutings: { ...weeklyOutings },
-      weeklyVacations: { ...weeklyVacations }
-    };
-
-    try {
-      if (user) {
-        const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'reports', reportId);
-        await setDoc(docRef, newReport);
-      }
-      alert(`${memberName} ${memberRank} 님의 주간업무보고서가 팀 취합 목록에 등록되어 실시간으로 공유되었습니다.`);
-      resetForm();
-      setActiveTab('view');
-    } catch (err) {
-      console.error("Save report error:", err);
-      alert('저장 중 오류가 발생했습니다.');
-    }
-  };
-
-  // Delete a report from Cloud Firestore
-  const handleDeleteReport = async (reportId) => {
-    try {
-      if (user) {
-        const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'reports', reportId);
-        await deleteDoc(docRef);
-      }
-    } catch (err) {
-      console.error("Delete report error:", err);
-    }
   };
 
   // Helper summaries
@@ -780,7 +712,19 @@ export default function App() {
                                 ) : null}
 
                                 <td className="py-2 px-4 border border-slate-300 text-slate-800 print:text-slate-900 print:border-slate-400">
-                                  {rep.lastWeekTasks[idx]?.content || ''}
+                                  {typeof rep.lastWeekTasks[idx]?.content === 'string' 
+                                    ? rep.lastWeekTasks[idx].content 
+                                    : (typeof rep.lastWeekTasks[idx] === 'string' ? rep.lastWeekTasks[idx] : '')}
+                                </td>
+
+                                <td className="py-2 px-3 text-center font-medium border border-slate-300 text-slate-700 bg-slate-50 print:text-slate-800 print:border-slate-400 print:bg-slate-50">
+                                  {memberDisplay}
+                                </td>
+
+                                <td className="py-2 px-4 border border-slate-300 text-slate-800 print:text-slate-900 print:border-slate-400">
+                                  {typeof rep.thisWeekTasks[idx]?.content === 'string' 
+                                    ? rep.thisWeekTasks[idx].content 
+                                    : (typeof rep.thisWeekTasks[idx] === 'string' ? rep.thisWeekTasks[idx] : '')}
                                 </td>
 
                                 <td className="py-2 px-3 text-center font-medium border border-slate-300 text-slate-700 bg-slate-50 print:text-slate-800 print:border-slate-400 print:bg-slate-50">
@@ -1007,7 +951,20 @@ export default function App() {
                         <h4 className="font-bold text-slate-500 mb-1">지난주 주요 업무</h4>
                         <ul className="list-disc list-inside text-slate-700 space-y-1">
                           {report.lastWeekTasks.map((t, idx) => (
-                            <li key={idx}>{t.content || '-'}</li>
+                            <li key={idx}>
+                              {typeof t === 'string' ? t : (t?.content || '-')}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      <div>
+                        <h4 className="font-bold text-slate-500 mb-1">이번주 예정 업무</h4>
+                        <ul className="list-disc list-inside text-slate-700 space-y-1">
+                          {report.thisWeekTasks.map((t, idx) => (
+                            <li key={idx}>
+                              {typeof t === 'string' ? t : (t?.content || '-')}
+                            </li>
                           ))}
                         </ul>
                       </div>
